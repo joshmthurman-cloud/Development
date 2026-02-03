@@ -1,0 +1,28 @@
+{
+  "fields": [
+    "Merchant_ID",
+    "Merchant_Name",
+    "Merchant_Address",
+    "Merchant_City",
+    "Merchant_State",
+    "Merchant_City_Code",
+    "Merchant_Phone_Number",
+    "Merchant_Time_Zone",
+    "KeyManagement_RKL_Device_GroupName",
+    "TSYS_Merchant_ID",
+    "TSYS_Acquirer_Bin",
+    "TSYS_Agent_Bank_Number",
+    "TSYS_Agent_Chain_Number",
+    "TSYS_Store_Number",
+    "TSYS_Terminal_Number",
+    "TSYS_Category_Code",
+    "TSYS_Terminal_ID",
+    "Contactless_Signature",
+    "TSYS_Authentication_Code",
+    "TSYS_Debit_Sharing_Group",
+    "TSYS_Merchant_ABA",
+    "TSYS_Settlement_Agent",
+    "TSYS_Reimbursement_Attribute"
+  ]
+}
+

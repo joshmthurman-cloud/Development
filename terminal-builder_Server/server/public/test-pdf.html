@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Extraction Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .upload-area {
+            border: 2px dashed #007bff;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            background-color: #e9ecef;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .results {
+            margin-top: 30px;
+            display: none;
+        }
+        .results.show {
+            display: block;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        pre {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #dc3545;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #28a745;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PDF VAR Sheet Extraction Test</h1>
+        <p>Upload a VAR sheet PDF to test the extraction and parsing functionality.</p>
+        
+        <div class="upload-area" 
+             id="uploadArea"
+             onclick="document.getElementById('fileInput').click()"
+             ondragover="handleDragOver(event)"
+             ondragenter="handleDragEnter(event)"
+             ondragleave="handleDragLeave(event)"
+             ondrop="handleDrop(event)">
+            <p>Click here or drag and drop a PDF file</p>
+            <input type="file" id="fileInput" accept=".pdf" />
+        </div>
+        
+        <div id="fileInfo"></div>
+        <button id="uploadBtn" onclick="uploadFile()" disabled>Extract PDF Data</button>
+        
+        <div id="loading" class="loading" style="display: none;">
+            <p>Processing PDF... Please wait.</p>
+        </div>
+        
+        <div id="results" class="results"></div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            document.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.style.backgroundColor = '#e9ecef';
+        }
+
+        function handleDragEnter(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.style.backgroundColor = '#e9ecef';
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.style.backgroundColor = '#f8f9fa';
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.style.backgroundColor = '#f8f9fa';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+                    selectedFile = file;
+                    // Create a new FileList-like object for the input
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    document.getElementById('fileInput').files = dataTransfer.files;
+                    document.getElementById('fileInfo').innerHTML = 
+                        `<div class="success">Selected: ${file.name} (${(file.size / 1024).toFixed(2)} KB)</div>`;
+                    document.getElementById('uploadBtn').disabled = false;
+                } else {
+                    alert('Please drop a PDF file');
+                }
+            }
+        }
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                selectedFile = file;
+                document.getElementById('fileInfo').innerHTML = 
+                    `<div class="success">Selected: ${file.name} (${(file.size / 1024).toFixed(2)} KB)</div>`;
+                document.getElementById('uploadBtn').disabled = false;
+            }
+        });
+
+        async function uploadFile() {
+            if (!selectedFile) {
+                alert('Please select a file first');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            document.getElementById('uploadBtn').disabled = true;
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('results').classList.remove('show');
+
+            try {
+                const response = await fetch('/api/test/extract', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('uploadBtn').disabled = false;
+
+                if (response.ok && data.success) {
+                    displayResults(data);
+                } else {
+                    document.getElementById('results').innerHTML = 
+                        `<div class="error"><strong>Error:</strong> ${data.error || 'Unknown error'}</div>`;
+                    document.getElementById('results').classList.add('show');
+                }
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('uploadBtn').disabled = false;
+                document.getElementById('results').innerHTML = 
+                    `<div class="error"><strong>Error:</strong> ${error.message}</div>`;
+                document.getElementById('results').classList.add('show');
+            }
+        }
+
+        function displayResults(data) {
+            let html = '<div class="success"><strong>✓ Extraction Successful!</strong></div>';
+            
+            html += `<div class="section">
+                <h3>File Information</h3>
+                <p><strong>File:</strong> ${data.fileName}</p>
+                <p><strong>Format:</strong> ${data.format}</p>
+                <p><strong>Text Length:</strong> ${data.extractedTextLength} characters</p>
+            </div>`;
+
+            html += `<div class="section">
+                <h3>Extracted Text Preview (first 500 chars)</h3>
+                <pre>${escapeHtml(data.extractedTextPreview)}</pre>
+            </div>`;
+
+            html += `<div class="section">
+                <h3>Parsed VAR Data</h3>
+                <pre>${JSON.stringify(data.varData, null, 2)}</pre>
+            </div>`;
+
+            html += `<div class="section">
+                <h3>Mapped STEAM Fields</h3>
+                <pre>${JSON.stringify(data.steamFields, null, 2)}</pre>
+            </div>`;
+
+            html += `<div class="section">
+                <h3>Validation Results</h3>
+                <p><strong>Valid:</strong> ${data.validation.isValid ? '✓ Yes' : '✗ No'}</p>
+                ${data.validation.errors.length > 0 ? 
+                    `<p><strong>Errors:</strong><ul>${data.validation.errors.map(e => `<li>${escapeHtml(e)}</li>`).join('')}</ul></p>` : ''}
+                ${data.validation.warnings.length > 0 ? 
+                    `<p><strong>Warnings:</strong><ul>${data.validation.warnings.map(w => `<li>${escapeHtml(w)}</li>`).join('')}</ul></p>` : ''}
+            </div>`;
+
+            document.getElementById('results').innerHTML = html;
+            document.getElementById('results').classList.add('show');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
+
