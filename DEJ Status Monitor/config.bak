@@ -1,0 +1,16 @@
+{
+  "check_times": [
+    "08:00",
+    "10:30",
+    "12:30",
+    "14:00"
+  ],
+  "checks_per_day": 4,
+  "timezone": "America/New_York",
+  "steam_api": {
+    "username": "apihandler",
+    "password": "gitBMk!qhKqR&amp;KC5",
+    "company_id": "1552",
+    "soap_url": "https://dvmms.com/steam/api/ws/VDirectAccess.asmx"
+  }
+}

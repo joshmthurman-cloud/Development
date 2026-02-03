@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block content %}
+<a href="/" class="back-link">← Back to Dashboard</a>
+
+<div class="card">
+    <h2>{{ title }}</h2>
+    <p style="color: #666; margin-bottom: 20px;">{{ description }}</p>
+    <p><strong>Total: {{ count }} terminals</strong>{% if merchant_display %} <span style="color: #666;">(Filtered by: {{ merchant_display }})</span>{% endif %}</p>
+    
+    {% if merchant_counts %}
+    <div style="margin-top: 20px; padding: 15px; background: #e8f4f8; border-radius: 4px; border: 1px solid #bee5eb;">
+        <h3 style="margin-bottom: 10px; font-size: 16px;">Count by Merchant (Click to Filter)</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+            {% for merchant in merchant_counts %}
+            <div onclick="filterByMerchant('{{ merchant.code }}')" 
+                 style="padding: 8px; background: {% if selected_merchant == merchant.code %}#d4edda{% else %}white{% endif %}; border-radius: 4px; border: 2px solid {% if selected_merchant == merchant.code %}#28a745{% else %}#ddd{% endif %}; cursor: pointer; transition: all 0.2s;" 
+                 onmouseover="if ('{{ selected_merchant }}' != '{{ merchant.code }}') { this.style.background='#f0f0f0'; this.style.borderColor='#3498db'; }" 
+                 onmouseout="if ('{{ selected_merchant }}' != '{{ merchant.code }}') { this.style.background='white'; this.style.borderColor='#ddd'; }">
+                <strong>{{ merchant.display }}</strong><br>
+                <span style="font-size: 20px; font-weight: bold; color: #e74c3c;">{{ merchant.count }}</span> terminal{{ merchant.count != 1 and 's' or '' }}
+                {% if selected_merchant == merchant.code %}
+                <span style="display: block; font-size: 11px; color: #28a745; font-weight: bold; margin-top: 4px;">✓ Selected</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% if selected_merchant %}
+        <div style="margin-top: 10px; text-align: center;">
+            <a href="{{ base_path }}" class="btn secondary" style="display: inline-block; text-decoration: none;">Clear Merchant Filter</a>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px;">
+        <h3 style="margin-bottom: 10px; font-size: 16px;">Filter Results</h3>
+        <form method="get" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; align-items: end;">
+            {% if merchants %}
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: 600;">Filter by Merchant:</label>
+                <select name="merchant" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="">All Merchants</option>
+                    {% for m in merchants %}
+                    <option value="{{ m.code }}" {% if selected_merchant == m.code %}selected{% endif %}>{{ m.display }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: 600;">Min Total Checks:</label>
+                <input type="number" name="min_total" value="{{ min_total or '' }}" placeholder="Any" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: 600;">Min Online Count:</label>
+                <input type="number" name="min_online" value="{{ min_online or '' }}" placeholder="Any" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: 600;">Min Offline Count:</label>
+                <input type="number" name="min_offline" value="{{ min_offline or '' }}" placeholder="Any" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: 600;">Min Online %:</label>
+                <input type="number" name="min_percentage" value="{{ min_percentage or '' }}" placeholder="Any" step="0.1" min="0" max="100" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div>
+                <button type="submit" class="btn" style="width: 100%;">Apply Filters</button>
+            </div>
+            {% if merchant or min_total or min_online or min_offline or min_percentage %}
+            <div>
+                <a href="{{ base_path }}" class="btn secondary" style="width: 100%; text-align: center; display: block; text-decoration: none;">Clear Filters</a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Terminals</h2>
+    <table id="terminalsTable">
+        <thead>
+            <tr>
+                <th onclick="sortTable(0)">TPN ↕</th>
+                <th onclick="sortTable(1)">Merchant ↕</th>
+                <th onclick="sortTable(2)">Latest Status ↕</th>
+                <th onclick="sortTable(3)">Total Checks ↕</th>
+                <th onclick="sortTable(4)">Online Count ↕</th>
+                <th onclick="sortTable(5)">Offline Count ↕</th>
+                <th onclick="sortTable(6)">Online % ↕</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for terminal in terminals %}
+            <tr onclick="window.location='/terminal/{{ terminal.tpn }}{{ query_string|default("") }}'" style="cursor: pointer;">
+                <td>
+                    <strong>{{ terminal.tpn }}</strong>
+                    <a href="/terminal/{{ terminal.tpn }}{{ query_string|default("") }}" target="_blank" onclick="event.stopPropagation();" style="margin-left: 8px; text-decoration: none; color: #3498db; font-size: 12px;" title="Open in new tab">🔗</a>
+                </td>
+                <td>
+                    {% if terminal.merchant_display %}
+                        <span style="font-size: 12px; color: #666;">{{ terminal.merchant_display }}</span>
+                    {% else %}
+                        <span style="font-size: 12px; color: #999;">Unknown</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="status {{ terminal.latest_status }}">
+                        {{ terminal.latest_status }}
+                    </span>
+                </td>
+                <td>{{ terminal.total_checks }}</td>
+                <td>{{ terminal.online_count }}</td>
+                <td>{{ terminal.offline_count }}</td>
+                <td>
+                    <span style="color: {% if terminal.online_percentage >= 90 %}#27ae60{% elif terminal.online_percentage >= 70 %}#f39c12{% else %}#e74c3c{% endif %}; font-weight: 600;">
+                        {{ terminal.online_percentage }}%
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not terminals %}
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 20px;">
+                    <em>No terminals found</em>
+                </td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let sortDirection = {};
+    
+    function filterByMerchant(merchantCode) {
+        // Get current URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Set merchant filter
+        urlParams.set('merchant', merchantCode);
+        
+        // Preserve other filter values if they exist
+        const minTotal = urlParams.get('min_total') || '';
+        const minOnline = urlParams.get('min_online') || '';
+        const minOffline = urlParams.get('min_offline') || '';
+        const minPercentage = urlParams.get('min_percentage') || '';
+        
+        // Build new URL
+        const newUrl = '{{ base_path }}?' + urlParams.toString();
+        
+        // Navigate to filtered URL
+        window.location.href = newUrl;
+    }
+    
+    function sortTable(columnIndex) {
+        const table = document.getElementById('terminalsTable');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        
+        const direction = sortDirection[columnIndex] || 'asc';
+        sortDirection[columnIndex] = direction === 'asc' ? 'desc' : 'asc';
+        
+        rows.sort((a, b) => {
+            let aText = a.cells[columnIndex].textContent.trim();
+            let bText = b.cells[columnIndex].textContent.trim();
+            
+            // Try to parse as number
+            let aVal = parseFloat(aText) || aText;
+            let bVal = parseFloat(bText) || bText;
+            
+            if (typeof aVal === 'number' && typeof bVal === 'number') {
+                return direction === 'asc' ? aVal - bVal : bVal - aVal;
+            }
+            
+            if (direction === 'asc') {
+                return aText > bText ? 1 : -1;
+            } else {
+                return aText < bText ? 1 : -1;
+            }
+        });
+        
+        rows.forEach(row => tbody.appendChild(row));
+        
+        // Update header arrows
+        const headers = table.querySelectorAll('th');
+        headers.forEach((h, i) => {
+            if (i === columnIndex) {
+                h.textContent = h.textContent.replace(/↕|↑|↓/g, '') + (direction === 'asc' ? ' ↑' : ' ↓');
+            } else {
+                h.textContent = h.textContent.replace(/↕|↑|↓/g, '') + ' ↕';
+            }
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,676 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if current_user.is_admin %}
+<div class="card" style="margin-bottom: 20px;">
+    <h2>Filter by Merchant</h2>
+    <form method="get" action="/" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        {% if request.query_params.get('date_range') %}
+        <input type="hidden" name="date_range" value="{{ request.query_params.get('date_range') }}">
+        {% endif %}
+        {% if request.query_params.get('start_date') %}
+        <input type="hidden" name="start_date" value="{{ request.query_params.get('start_date') }}">
+        {% endif %}
+        {% if request.query_params.get('end_date') %}
+        <input type="hidden" name="end_date" value="{{ request.query_params.get('end_date') }}">
+        {% endif %}
+        <select name="merchant" id="merchantFilter" style="padding: 8px; font-size: 14px; min-width: 300px;">
+            <option value="">All Merchants</option>
+            {% for m in merchants %}
+            <option value="{{ m.code }}" {% if selected_merchant == m.code %}selected{% endif %}>{{ m.display }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn">Filter</button>
+        {% if selected_merchant %}
+        <a href="/merchant/{{ selected_merchant }}" class="btn" style="background: #27ae60;">View Merchant Stats</a>
+        {% endif %}
+        <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
+            <input type="text" id="manualTPN" placeholder="Enter TPN" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; width: 150px;" onkeypress="if(event.key==='Enter') viewTPN()">
+            <button type="button" onclick="viewTPN()" class="btn secondary">View TPN</button>
+        </div>
+    </form>
+</div>
+{% else %}
+<div class="card" style="margin-bottom: 20px;">
+    <form method="get" action="/" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        {% if request.query_params.get('date_range') %}
+        <input type="hidden" name="date_range" value="{{ request.query_params.get('date_range') }}">
+        {% endif %}
+        {% if request.query_params.get('start_date') %}
+        <input type="hidden" name="start_date" value="{{ request.query_params.get('start_date') }}">
+        {% endif %}
+        {% if request.query_params.get('end_date') %}
+        <input type="hidden" name="end_date" value="{{ request.query_params.get('end_date') }}">
+        {% endif %}
+        {% if has_single_merchant and single_merchant_code %}
+        <a href="/merchant/{{ single_merchant_code }}" class="btn" style="background: #27ae60;">View Merchant Stats</a>
+        {% endif %}
+        <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
+            <input type="text" id="manualTPN" placeholder="Enter TPN" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; width: 150px;" onkeypress="if(event.key==='Enter') viewTPN()">
+            <button type="button" onclick="viewTPN()" class="btn secondary">View TPN</button>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+<div class="card" style="margin-bottom: 20px;">
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <strong>Date Range:</strong>
+        <button onclick="setDateRange('today')" id="btn-today" class="btn date-range-btn" style="font-size: 12px; padding: 6px 12px;">Today</button>
+        <button onclick="setDateRange('week')" id="btn-week" class="btn secondary date-range-btn" style="font-size: 12px; padding: 6px 12px;">1 Week</button>
+        <button onclick="setDateRange('month')" id="btn-month" class="btn secondary date-range-btn" style="font-size: 12px; padding: 6px 12px;">1 Month</button>
+        <button onclick="showDateRangePicker()" id="btn-custom" class="btn secondary date-range-btn" style="font-size: 12px; padding: 6px 12px;">Date Range</button>
+        <div id="customDateRange" style="display: none; margin-left: 10px;">
+            <input type="date" id="startDate" style="padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+            <span style="margin: 0 5px;">to</span>
+            <input type="date" id="endDate" style="padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+            <button onclick="applyCustomDateRange()" class="btn" style="font-size: 12px; padding: 6px 12px; margin-left: 5px;">Apply</button>
+        </div>
+    </div>
+</div>
+
+<div class="analytics">
+    <div class="analytics-card" id="alwaysOfflineCard">
+        <h3>⚠️ Always Offline</h3>
+        {% if not selected_merchant and current_user.is_admin and not has_single_merchant %}
+        <div onclick="toggleMerchantFilter('always-offline')" style="cursor: pointer; text-align: center;">
+            <p style="font-size: 48px; font-weight: bold; color: #e74c3c; margin: 10px 0; text-align: center;">
+                {{ analytics.always_offline_today_count }}
+            </p>
+            <p style="font-size: 14px; color: #666; margin-top: 5px;">
+                {{ analytics.always_offline_percentage }}% of {{ analytics.total_terminals }} terminals
+            </p>
+        </div>
+        <p style="color: #666; font-size: 14px; text-align: center;">offline/disconnect for ALL checks</p>
+        <p style="color: #999; font-size: 12px; margin-top: 5px; text-align: center;">Click to filter by merchant</p>
+        {% elif not selected_merchant and (not current_user.is_admin or has_single_merchant) %}
+        <div style="text-align: center;">
+            <p style="font-size: 48px; font-weight: bold; color: #e74c3c; margin: 10px 0; text-align: center;">
+                {{ analytics.always_offline_today_count }}
+            </p>
+            <p style="font-size: 14px; color: #666; margin-top: 5px;">
+                {{ analytics.always_offline_percentage }}% of {{ analytics.total_terminals }} terminals
+            </p>
+        </div>
+        <p style="color: #666; font-size: 14px; text-align: center;">offline/disconnect for ALL checks</p>
+        {% else %}
+        <div style="text-align: center;">
+            <p style="font-size: 48px; font-weight: bold; color: #e74c3c; margin: 10px 0;">
+                {{ analytics.always_offline_today_count }}
+            </p>
+            <p style="font-size: 14px; color: #666; margin-top: 5px;">
+                {{ analytics.always_offline_percentage }}% of {{ analytics.total_terminals }} terminals
+            </p>
+        </div>
+        <p style="color: #666; font-size: 14px; text-align: center;">offline/disconnect for ALL checks</p>
+        {% endif %}
+    </div>
+    <div class="analytics-card" id="alwaysOnlineCard">
+        <h3>✅ Always Online</h3>
+        {% if not selected_merchant and current_user.is_admin and not has_single_merchant %}
+        <div onclick="toggleMerchantFilter('always-online')" style="cursor: pointer; text-align: center;">
+            <p style="font-size: 48px; font-weight: bold; color: #27ae60; margin: 10px 0; text-align: center;">
+                {{ analytics.always_online_today_count }}
+            </p>
+            <p style="font-size: 14px; color: #666; margin-top: 5px;">
+                {{ analytics.always_online_percentage }}% of {{ analytics.total_terminals }} terminals
+            </p>
+        </div>
+        <p style="color: #666; font-size: 14px; text-align: center;">online for ALL checks</p>
+        <p style="color: #999; font-size: 12px; margin-top: 5px; text-align: center;">Click to filter by merchant</p>
+        {% elif not selected_merchant and (not current_user.is_admin or has_single_merchant) %}
+        <div style="text-align: center;">
+            <p style="font-size: 48px; font-weight: bold; color: #27ae60; margin: 10px 0; text-align: center;">
+                {{ analytics.always_online_today_count }}
+            </p>
+            <p style="font-size: 14px; color: #666; margin-top: 5px;">
+                {{ analytics.always_online_percentage }}% of {{ analytics.total_terminals }} terminals
+            </p>
+        </div>
+        <p style="color: #666; font-size: 14px; text-align: center;">online for ALL checks</p>
+        {% else %}
+        <div style="text-align: center;">
+            <p style="font-size: 48px; font-weight: bold; color: #27ae60; margin: 10px 0;">
+                {{ analytics.always_online_today_count }}
+            </p>
+            <p style="font-size: 14px; color: #666; margin-top: 5px;">
+                {{ analytics.always_online_percentage }}% of {{ analytics.total_terminals }} terminals
+            </p>
+        </div>
+        <p style="color: #666; font-size: 14px; text-align: center;">online for ALL checks</p>
+        {% endif %}
+    </div>
+    <div class="analytics-card" id="onlineAtLeastOnceCard">
+        <h3>📊 Online At Least Once</h3>
+        {% if not selected_merchant and current_user.is_admin and not has_single_merchant %}
+        <div onclick="toggleMerchantFilter('online-once')" style="cursor: pointer; text-align: center;">
+            <p style="font-size: 48px; font-weight: bold; color: #3498db; margin: 10px 0; text-align: center;">
+                {{ analytics.online_at_least_once_today_count }}
+            </p>
+            <p style="font-size: 14px; color: #666; margin-top: 5px;">
+                {{ analytics.online_at_least_once_percentage }}% of {{ analytics.total_terminals }} terminals
+            </p>
+        </div>
+        <p style="color: #666; font-size: 14px; text-align: center;">were online at least once</p>
+        <p style="color: #999; font-size: 12px; margin-top: 5px; text-align: center;">Click to filter by merchant</p>
+        {% elif not selected_merchant and (not current_user.is_admin or has_single_merchant) %}
+        <div style="text-align: center;">
+            <p style="font-size: 48px; font-weight: bold; color: #3498db; margin: 10px 0; text-align: center;">
+                {{ analytics.online_at_least_once_today_count }}
+            </p>
+            <p style="font-size: 14px; color: #666; margin-top: 5px;">
+                {{ analytics.online_at_least_once_percentage }}% of {{ analytics.total_terminals }} terminals
+            </p>
+        </div>
+        <p style="color: #666; font-size: 14px; text-align: center;">were online at least once</p>
+        {% else %}
+        <div style="text-align: center;">
+            <p style="font-size: 48px; font-weight: bold; color: #3498db; margin: 10px 0;">
+                {{ analytics.online_at_least_once_today_count }}
+            </p>
+            <p style="font-size: 14px; color: #666; margin-top: 5px;">
+                {{ analytics.online_at_least_once_percentage }}% of {{ analytics.total_terminals }} terminals
+            </p>
+        </div>
+        <p style="color: #666; font-size: 14px; text-align: center;">were online at least once</p>
+        {% endif %}
+    </div>
+</div>
+
+{% if not selected_merchant and current_user.is_admin and not has_single_merchant %}
+<div id="merchantFilterSection" style="display: none; margin-bottom: 20px;">
+    <div class="card" style="padding: 12px;">
+        <h3 id="filterSectionTitle" style="margin-bottom: 8px; font-size: 14px;">Count by Merchant (Click to Filter)</h3>
+        <div id="merchantFilterContent">
+            <!-- Content will be populated by JavaScript -->
+        </div>
+        <div id="clearFilterBtn" style="display: none; margin-top: 8px; text-align: center;">
+            <button onclick="clearMerchantFilter()" class="btn secondary" style="font-size: 12px; padding: 6px 12px;">Clear Merchant Filter</button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>All Terminals</h2>
+    <table id="terminalsTable">
+        <thead>
+            <tr>
+                <th onclick="sortTable(0)">TPN ↕</th>
+                <th onclick="sortTable(1)">Latest Status ↕</th>
+                <th onclick="sortTable(2)">Uptime % ↕</th>
+                <th onclick="sortTable(3)">Latest Checked ↕</th>
+                <th onclick="sortTable(4)">Last Online ↕</th>
+                <th onclick="sortTable(5)">Time Since Last Online ↕</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for terminal in terminals %}
+            <tr onclick="window.location='/terminal/{{ terminal.tpn }}{{ query_string }}'" style="cursor: pointer;">
+                <td>
+                    <strong>{{ terminal.tpn }}</strong>
+                    <a href="/terminal/{{ terminal.tpn }}{{ query_string }}" target="_blank" onclick="event.stopPropagation();" style="margin-left: 8px; text-decoration: none; color: #3498db; font-size: 12px;" title="Open in new tab">🔗</a>
+                </td>
+                <td>
+                    <span class="status {{ terminal.latest_status }}">
+                        {{ terminal.latest_status }}
+                    </span>
+                </td>
+                <td>
+                    {% if terminal.uptime_percentage is not none %}
+                        <span style="color: {% if terminal.uptime_percentage >= 90 %}#27ae60{% elif terminal.uptime_percentage >= 70 %}#f39c12{% else %}#e74c3c{% endif %}; font-weight: 600;">
+                            {{ terminal.uptime_percentage }}%
+                        </span>
+                        {% if terminal.total_checks %}
+                        <span style="font-size: 11px; color: #999; display: block;">
+                            ({{ terminal.online_checks }}/{{ terminal.total_checks }})
+                        </span>
+                        {% endif %}
+                    {% else %}
+                        <em>N/A</em>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if terminal.latest_checked_at %}
+                        {{ terminal.latest_checked_at | to_eastern }}
+                    {% else %}
+                        <em>Never</em>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if terminal.last_online_at %}
+                        {{ terminal.last_online_at | to_eastern }}
+                    {% else %}
+                        <em>Never</em>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if terminal.time_since_last_online_seconds is not none %}
+                        <span class="time-ago">
+                            {{ terminal.time_since_last_online_seconds | format_duration }}
+                        </span>
+                    {% else %}
+                        <em>Never</em>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Set terminal counts for base template
+    window.terminalCounts = {
+        db: {{ total_terminals_in_db }},
+        file: {{ tpns_file_count }}
+    };
+    
+    // Store terminals for all three categories
+    const alwaysOfflineTPNs = {{ always_offline_tpns | tojson }};
+    const alwaysOnlineTPNs = {{ always_online_tpns | tojson }};
+    const onlineAtLeastOnceTPNs = {{ online_at_least_once_tpns | tojson }};
+    
+    // Store merchant counts for all three categories
+    const alwaysOfflineMerchantCounts = {{ always_offline_merchant_counts | tojson }};
+    const alwaysOnlineMerchantCounts = {{ always_online_merchant_counts | tojson }};
+    const onlineAtLeastOnceMerchantCounts = {{ online_at_least_once_merchant_counts | tojson }};
+    
+    // Check if a merchant is selected
+    const hasMerchantSelected = {{ 'true' if selected_merchant else 'false' }};
+    
+    let selectedCategory = null;
+    let selectedMerchantCode = null;
+    let originalTerminals = null;
+    
+    let sortDirection = {};
+    
+    // Hide merchant filter section if a merchant is already selected
+    if (hasMerchantSelected) {
+        const section = document.getElementById('merchantFilterSection');
+        if (section) {
+            section.style.display = 'none';
+        }
+    }
+    
+    // Date range functionality
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentDateRange = urlParams.get('date_range') || 'today';
+    updateDateRangeButtons(currentDateRange);
+    
+    // Store initial analytics values to detect changes
+    let lastAnalyticsHash = null;
+    
+    // Initialize with current analytics values
+    lastAnalyticsHash = JSON.stringify({
+        always_offline: {{ analytics.always_offline_today_count }},
+        always_online: {{ analytics.always_online_today_count }},
+        online_once: {{ analytics.online_at_least_once_today_count }}
+    });
+    
+    function setDateRange(range) {
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('date_range', range);
+        urlParams.delete('start_date');
+        urlParams.delete('end_date');
+        // Preserve merchant filter
+        const merchant = urlParams.get('merchant');
+        if (merchant) {
+            urlParams.set('merchant', merchant);
+        }
+        window.location.search = urlParams.toString();
+    }
+    
+    // Auto-refresh functionality - check for new data after scheduled checks
+    async function checkForNewData() {
+        try {
+            // Get current analytics
+            const urlParams = new URLSearchParams(window.location.search);
+            const dateRange = urlParams.get('date_range') || 'today';
+            const merchant = urlParams.get('merchant') || null;
+            const startDate = urlParams.get('start_date') || null;
+            const endDate = urlParams.get('end_date') || null;
+            
+            let apiUrl = '/api/analytics?date_range=' + dateRange;
+            if (merchant) {
+                apiUrl += '&merchant=' + encodeURIComponent(merchant);
+            }
+            if (startDate) {
+                apiUrl += '&start_date=' + encodeURIComponent(startDate);
+            }
+            if (endDate) {
+                apiUrl += '&end_date=' + encodeURIComponent(endDate);
+            }
+            
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            
+            // Create a hash of the analytics data to detect changes
+            const analyticsHash = JSON.stringify({
+                always_offline: data.always_offline_today_count,
+                always_online: data.always_online_today_count,
+                online_once: data.online_at_least_once_today_count
+            });
+            
+            // Check if data has changed
+            if (lastAnalyticsHash && lastAnalyticsHash !== analyticsHash) {
+                // Data has changed, reload the page
+                console.log('New check data detected, reloading page...');
+                window.location.reload();
+                return;
+            }
+            
+            lastAnalyticsHash = analyticsHash;
+        } catch (error) {
+            console.error('Error checking for new data:', error);
+        }
+    }
+    
+    // Poll for new data every 30 seconds
+    setInterval(checkForNewData, 30000);
+    
+    // Monitor countdown to detect when checks complete
+    let previousCountdownText = '';
+    let checkCompletionMonitor = setInterval(() => {
+        const countdownEl = document.getElementById('nextCheckCountdown');
+        if (countdownEl) {
+            const currentText = countdownEl.textContent;
+            // If countdown shows "Running..." and it wasn't before, check will complete soon
+            if (currentText.includes('Running...') && !previousCountdownText.includes('Running...')) {
+                // Check started, wait 2 minutes for it to complete, then check for new data
+                setTimeout(() => {
+                    checkForNewData();
+                    // Continue checking every 10 seconds for the next 3 minutes
+                    let aggressiveCheck = setInterval(() => {
+                        checkForNewData();
+                    }, 10000);
+                    setTimeout(() => clearInterval(aggressiveCheck), 180000);
+                }, 120000); // Wait 2 minutes for check to complete
+            }
+            previousCountdownText = currentText;
+        }
+    }, 2000);
+    
+    function showDateRangePicker() {
+        const picker = document.getElementById('customDateRange');
+        picker.style.display = picker.style.display === 'none' ? 'block' : 'none';
+    }
+    
+    function applyCustomDateRange() {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        
+        if (!startDate || !endDate) {
+            alert('Please select both start and end dates');
+            return;
+        }
+        
+        if (new Date(startDate) > new Date(endDate)) {
+            alert('Start date must be before end date');
+            return;
+        }
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('date_range', 'custom');
+        urlParams.set('start_date', startDate);
+        urlParams.set('end_date', endDate);
+        // Preserve merchant filter
+        const merchant = urlParams.get('merchant');
+        if (merchant) {
+            urlParams.set('merchant', merchant);
+        }
+        window.location.search = urlParams.toString();
+    }
+    
+    function updateDateRangeButtons(activeRange) {
+        document.querySelectorAll('.date-range-btn').forEach(btn => {
+            btn.classList.remove('btn');
+            btn.classList.add('btn', 'secondary');
+        });
+        
+        const activeBtn = document.getElementById('btn-' + activeRange);
+        if (activeBtn) {
+            activeBtn.classList.remove('secondary');
+        }
+    }
+    
+    function toggleMerchantFilter(category) {
+        // Only allow filtering when no merchant is selected
+        const merchantFilter = document.getElementById('merchantFilter');
+        if (merchantFilter && merchantFilter.value) {
+            return; // Don't allow filtering when a merchant is already selected
+        }
+        
+        const section = document.getElementById('merchantFilterSection');
+        if (!section) return; // Section doesn't exist when merchant is selected
+        
+        const titleEl = document.getElementById('filterSectionTitle');
+        const contentEl = document.getElementById('merchantFilterContent');
+        
+        // If clicking the same category, toggle off
+        if (section.style.display !== 'none' && selectedCategory === category) {
+            section.style.display = 'none';
+            clearMerchantFilter();
+            return;
+        }
+        
+        // Set selected category
+        selectedCategory = category;
+        
+        // Determine which merchant counts and TPNs to use
+        let merchantCounts, titleText, color;
+        if (category === 'always-offline') {
+            merchantCounts = alwaysOfflineMerchantCounts;
+            titleText = 'Always Offline Today - Count by Merchant (Click to Filter)';
+            color = '#e74c3c';
+        } else if (category === 'always-online') {
+            merchantCounts = alwaysOnlineMerchantCounts;
+            titleText = 'Always Online Today - Count by Merchant (Click to Filter)';
+            color = '#27ae60';
+        } else if (category === 'online-once') {
+            merchantCounts = onlineAtLeastOnceMerchantCounts;
+            titleText = 'Online At Least Once Today - Count by Merchant (Click to Filter)';
+            color = '#3498db';
+        }
+        
+        // Update title
+        titleEl.textContent = titleText;
+        
+        // Build merchant filter boxes
+        if (merchantCounts && merchantCounts.length > 0) {
+            let html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px;">';
+            merchantCounts.forEach(merchant => {
+                html += `
+                    <div onclick="filterByMerchant('${merchant.code}')" 
+                         id="merchant-${merchant.code}"
+                         class="merchant-filter-box"
+                         style="padding: 6px; background: white; border-radius: 4px; border: 2px solid #ddd; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; min-height: 60px; justify-content: space-between; text-align: center;" 
+                         onmouseover="if (!this.classList.contains('selected')) { this.style.background='#f0f0f0'; this.style.borderColor='#3498db'; }" 
+                         onmouseout="if (!this.classList.contains('selected')) { this.style.background='white'; this.style.borderColor='#ddd'; }">
+                        <strong style="font-size: 12px; margin-bottom: auto;">${merchant.display}</strong>
+                        <span style="font-size: 15px; font-weight: bold; color: ${color}; margin-top: auto;">${merchant.count} terminal${merchant.count !== 1 ? 's' : ''}</span>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            contentEl.innerHTML = html;
+        } else {
+            contentEl.innerHTML = '<p style="color: #666; font-size: 14px; text-align: center; padding: 20px;">No terminals found in this category today</p>';
+        }
+        
+        // Show section
+        section.style.display = 'block';
+        
+        // Clear any existing filter
+        clearMerchantFilter();
+    }
+    
+    function filterByMerchant(merchantCode) {
+        selectedMerchantCode = merchantCode;
+        
+        // Update UI - highlight selected merchant
+        document.querySelectorAll('.merchant-filter-box').forEach(box => {
+            box.classList.remove('selected');
+            box.style.background = 'white';
+            box.style.borderColor = '#ddd';
+        });
+        
+        const selectedBox = document.getElementById('merchant-' + merchantCode);
+        if (selectedBox) {
+            selectedBox.classList.add('selected');
+            selectedBox.style.background = '#d4edda';
+            selectedBox.style.borderColor = '#28a745';
+        }
+        
+        // Show clear filter button
+        document.getElementById('clearFilterBtn').style.display = 'block';
+        
+        // Filter terminals table
+        const table = document.getElementById('terminalsTable');
+        const tbody = table.querySelector('tbody');
+        const rows = tbody.querySelectorAll('tr');
+        
+        // Store original terminals if not already stored
+        if (!originalTerminals) {
+            originalTerminals = Array.from(rows).map(row => row.cloneNode(true));
+        }
+        
+        // Determine which TPN list to use based on selected category
+        let tpnList;
+        if (selectedCategory === 'always-offline') {
+            tpnList = alwaysOfflineTPNs;
+        } else if (selectedCategory === 'always-online') {
+            tpnList = alwaysOnlineTPNs;
+        } else if (selectedCategory === 'online-once') {
+            tpnList = onlineAtLeastOnceTPNs;
+        } else {
+            tpnList = [];
+        }
+        
+        let visibleCount = 0;
+        rows.forEach(row => {
+            const tpnCell = row.cells[0];
+            if (!tpnCell) return;
+            
+            // Extract TPN from the cell (get text from strong tag or first text node, excluding link icon)
+            const strongTag = tpnCell.querySelector('strong');
+            const tpn = strongTag ? strongTag.textContent.trim() : tpnCell.textContent.trim().split('🔗')[0].trim();
+            const tpnMerchantCode = tpn.substring(0, 4);
+            
+            // Only show terminals that are in the selected category's list AND match merchant
+            const isInCategory = tpnList.includes(tpn);
+            const matchesMerchant = tpnMerchantCode === merchantCode;
+            
+            if (isInCategory && matchesMerchant) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        // Update table header or show message
+        if (visibleCount === 0) {
+            // Check if "no terminals" row exists
+            let noTerminalsRow = tbody.querySelector('tr.no-terminals-message');
+            if (!noTerminalsRow) {
+                noTerminalsRow = document.createElement('tr');
+                noTerminalsRow.className = 'no-terminals-message';
+                noTerminalsRow.innerHTML = '<td colspan="6" style="text-align: center; padding: 20px;"><em>No terminals found for this merchant</em></td>';
+                tbody.appendChild(noTerminalsRow);
+            }
+            noTerminalsRow.style.display = '';
+        } else {
+            const noTerminalsRow = tbody.querySelector('tr.no-terminals-message');
+            if (noTerminalsRow) {
+                noTerminalsRow.style.display = 'none';
+            }
+        }
+    }
+    
+    function clearMerchantFilter() {
+        selectedMerchantCode = null;
+        
+        // Reset UI
+        document.querySelectorAll('.merchant-filter-box').forEach(box => {
+            box.classList.remove('selected');
+            box.style.background = 'white';
+            box.style.borderColor = '#ddd';
+        });
+        
+        document.getElementById('clearFilterBtn').style.display = 'none';
+        
+        // Show all terminals
+        const table = document.getElementById('terminalsTable');
+        const tbody = table.querySelector('tbody');
+        const rows = tbody.querySelectorAll('tr');
+        
+        rows.forEach(row => {
+            if (!row.classList.contains('no-terminals-message')) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+    
+    function formatDuration(seconds) {
+        if (seconds < 60) return seconds + 's';
+        if (seconds < 3600) return Math.floor(seconds / 60) + 'm';
+        if (seconds < 86400) return Math.floor(seconds / 3600) + 'h';
+        return Math.floor(seconds / 86400) + 'd';
+    }
+    
+    function sortTable(columnIndex) {
+        const table = document.getElementById('terminalsTable');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        
+        const direction = sortDirection[columnIndex] || 'asc';
+        sortDirection[columnIndex] = direction === 'asc' ? 'desc' : 'asc';
+        
+        rows.sort((a, b) => {
+            const aText = a.cells[columnIndex].textContent.trim();
+            const bText = b.cells[columnIndex].textContent.trim();
+            
+            // Try to parse as number or date
+            let aVal = aText;
+            let bVal = bText;
+            
+            if (columnIndex === 2) { // Uptime percentage
+                // Extract percentage number
+                const aMatch = aText.match(/([\d.]+)/);
+                const bMatch = bText.match(/([\d.]+)/);
+                aVal = aMatch ? parseFloat(aMatch[1]) : 0;
+                bVal = bMatch ? parseFloat(bMatch[1]) : 0;
+            } else if (columnIndex === 5) { // Time since last online
+                // Extract number from duration string
+                const aMatch = aText.match(/(\d+)/);
+                const bMatch = bText.match(/(\d+)/);
+                aVal = aMatch ? parseInt(aMatch[1]) : 999999;
+                bVal = bMatch ? parseInt(bMatch[1]) : 999999;
+            }
+            
+            if (direction === 'asc') {
+                return aVal > bVal ? 1 : -1;
+            } else {
+                return aVal < bVal ? 1 : -1;
+            }
+        });
+        
+        rows.forEach(row => tbody.appendChild(row));
+        
+        // Update header arrows
+        const headers = table.querySelectorAll('th');
+        headers.forEach((h, i) => {
+            if (i === columnIndex) {
+                h.textContent = h.textContent.replace(/↕|↑|↓/g, '') + (direction === 'asc' ? ' ↑' : ' ↓');
+            } else {
+                h.textContent = h.textContent.replace(/↕|↑|↓/g, '') + ' ↕';
+            }
+        });
+    }
+</script>
+{% endblock %}
