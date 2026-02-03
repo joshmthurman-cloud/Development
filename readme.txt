@@ -21,6 +21,18 @@ eas submit -p ios --profile production --latest
 
 
 GIT
+git config --global user.name "Joshua Thurman"
+git config --global user.email "joshmthurman@gmail.com"
+git config --global --list
+
+git remote add origin https://github.com/joshmthurman-cloud/HexLogic.git
+git remote -v
+
+git branch -M main
+git push -u origin main
+
+
+
 git add "terminal-builder"
 git commit -m "Add terminal-builder"
 git push
