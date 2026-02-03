@@ -16,3 +16,12 @@ eas build -p ios --profile production
 
 eas submit -p ios --profile production --latest
 (https://appstoreconnect.apple.com/)
+
+
+
+
+GIT
+git add "terminal-builder"
+git commit -m "Add terminal-builder"
+git push
+
