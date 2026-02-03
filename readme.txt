@@ -25,3 +25,19 @@ git add "terminal-builder"
 git commit -m "Add terminal-builder"
 git push
 
+git add readme.txt
+git commit -m "Update readme"
+git push
+
+
+First time on the other PC (if the repo is NOT there yet)
+cd C:\Development
+git clone https://github.com/joshmthurman-cloud/Development.git
+
+Every time after that (normal workflow)
+cd C:\Development
+git pull
+
+
+
+
