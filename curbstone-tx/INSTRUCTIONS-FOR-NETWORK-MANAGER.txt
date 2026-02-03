@@ -1,0 +1,119 @@
+================================================================================
+CURBSTONE TRANSACTION BUILDER - DEPLOYMENT INSTRUCTIONS
+================================================================================
+
+This application requires Node.js to run. Follow these steps:
+
+1. INSTALL NODE.JS
+   - Download from: https://nodejs.org/
+   - Install Node.js LTS version (v18 or higher)
+   - Verify: Open Command Prompt and type: node --version
+
+2. EXTRACT AND SETUP
+   - Extract the curbstone-tx folder to your server location
+     (e.g., C:\apps\curbstone-tx)
+   - Open Command Prompt or PowerShell in that folder
+
+3. INSTALL DEPENDENCIES
+   - Run: npm install
+   - Wait for completion (2-5 minutes)
+
+4. BUILD THE APPLICATION
+   - Run: npm run build
+   - Wait for completion (30-60 seconds)
+
+5. START THE SERVER
+   - Run: node server.js
+   - The server will start on port 3000
+   - You should see: "Server running on port 3000"
+
+6. ACCESS THE APPLICATION
+   - Open browser to: http://localhost:3000
+     OR
+     http://[server-ip]:3000
+   - Default login:
+     Username: ADMIN
+     Password: p0okmju7yg
+
+7. SET UP AS WINDOWS SERVICE (Optional - Recommended)
+   
+   Option A: Using NSSM (Recommended)
+   - Download NSSM from: https://nssm.cc/download
+   - Extract nssm.exe
+   - Run: nssm.exe install CurbstoneTX
+   - Set:
+     Path: C:\Program Files\nodejs\node.exe
+     Startup directory: C:\apps\curbstone-tx (your folder)
+     Arguments: server.js
+   - Start service from Windows Services
+
+   Option B: Using Task Scheduler
+   - Create task that runs on startup
+   - Program: C:\Program Files\nodejs\node.exe
+   - Arguments: server.js
+   - Start in: C:\apps\curbstone-tx (your folder)
+
+8. FIREWALL CONFIGURATION
+   - Open port 3000 (or your configured port) in Windows Firewall
+   - Allow inbound connections on that port
+
+9. CONFIGURE IIS REVERSE PROXY (Optional - Recommended for Production)
+   - Install URL Rewrite module for IIS
+   - Create IIS site pointing to: C:\apps\curbstone-tx\dist
+   - Configure reverse proxy to forward /api/* to http://localhost:3000/api/*
+   - See DEPLOYMENT-GUIDE.md for detailed IIS setup
+
+================================================================================
+IMPORTANT NOTES
+================================================================================
+
+- Default admin password MUST be changed after first login
+- Logs are stored in: C:\apps\curbstone-tx\LOGS (auto-created)
+- User accounts stored in: C:\apps\curbstone-tx\users.json (auto-created)
+- Back up users.json and LOGS folder regularly
+
+================================================================================
+CONFIGURATION (Optional)
+================================================================================
+
+Create a .env file in the curbstone-tx folder to customize:
+
+PORT=3000
+LOGS_PATH=C:\apps\curbstone-tx\LOGS
+SESSION_SECRET=change-this-to-a-random-string-32-chars-or-more
+NODE_ENV=production
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Server won't start?
+- Check Node.js is installed: node --version
+- Check port 3000 isn't in use: netstat -ano | findstr :3000
+- Check for errors in console output
+
+Can't access from network?
+- Check Windows Firewall allows port 3000
+- Verify server is running: node server.js
+- Check server IP address is correct
+
+Users can't log in?
+- Verify users.json exists
+- Check server console for errors
+- Clear browser cookies and try again
+
+================================================================================
+SUPPORT FILES
+================================================================================
+
+- DEPLOYMENT-GUIDE.md - Detailed deployment guide
+- QUICK-START.md - Quick reference
+- DEPLOYMENT-CHECKLIST.md - Checklist for deployment
+
+================================================================================
+
+
+
+
+
+
