@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 from fastapi import FastAPI, Depends, HTTPException, Request, Query, Form, status as http_status
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy.orm import Session
@@ -130,6 +131,10 @@ app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 # Templates
 template_dir = Path(__file__).parent / "templates"
 templates = Jinja2Templates(directory=str(template_dir))
+
+# Static files (logo, etc.)
+static_dir = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 # Add custom Jinja2 filters
 def format_duration(seconds):

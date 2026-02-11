@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/static/img/curbstone-logo.png" type="image/png">
     <title>{% block title %}Terminal Status Monitor{% endblock %}</title>
     <style>
         * {
@@ -22,29 +23,53 @@
             padding: 20px;
         }
         header {
-            background: #2c3e50;
-            color: white;
-            padding: 20px 0;
+            background: #ffffff;
+            color: #474954;
+            padding: 16px 0;
             margin-bottom: 30px;
+            border-bottom: 3px solid #5693b3;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
         header h1 {
             margin: 0;
             font-size: 24px;
+        }
+        header h1 a {
+            color: #474954 !important;
+        }
+        header h1 a:hover {
+            color: #5693b3 !important;
         }
         .header-content {
             max-width: 1400px;
             margin: 0 auto;
             padding: 0 20px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 20px;
+        }
+        .header-left {
+            flex-shrink: 0;
+        }
+        .header-left .logo {
+            height: 40px;
+            display: block;
+        }
+        .header-center {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .header-right {
+            flex-shrink: 0;
         }
         .actions {
             display: flex;
             gap: 10px;
         }
         button, .btn {
-            background: #3498db;
+            background: #5693b3;
             color: white;
             border: none;
             padding: 10px 20px;
@@ -55,13 +80,14 @@
             display: inline-block;
         }
         button:hover, .btn:hover {
-            background: #2980b9;
+            background: #47819e;
         }
         button.secondary {
-            background: #95a5a6;
+            background: #bfd1e5;
+            color: #474954;
         }
         button.secondary:hover {
-            background: #7f8c8d;
+            background: #a8bfdb;
         }
         .card {
             background: white;
@@ -137,7 +163,7 @@
         }
         .analytics-card h3 {
             margin-bottom: 10px;
-            color: #2c3e50;
+            color: #474954;
         }
         .analytics-card ul {
             list-style: none;
@@ -149,10 +175,11 @@
         .back-link {
             display: inline-block;
             margin-bottom: 20px;
-            color: #3498db;
+            color: #5693b3;
             text-decoration: none;
         }
         .back-link:hover {
+            color: #c97c5d;
             text-decoration: underline;
         }
         .history-table {
@@ -170,17 +197,23 @@
 <body>
     <header>
         <div class="header-content">
-            <h1><a href="/" style="color: white; text-decoration: none;">Terminal Status Monitor</a></h1>
+            <div class="header-left">
+                <a href="/" class="header-logo-link"><img src="/static/img/curbstone-logo.png" alt="Curbstone" class="logo"></a>
+            </div>
+            <div class="header-center">
+                <h1><a href="/" style="text-decoration: none;">Terminal Status Monitor</a></h1>
+            </div>
+            <div class="header-right">
             <div class="actions">
                 {% if current_user %}
                 <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end;">
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <span style="color: #ecf0f1; margin-right: 10px; font-size: 14px;">
+                        <span style="color: #474954; margin-right: 10px; font-size: 14px;">
                             {{ current_user.email }}
-                            {% if current_user.is_admin %}<span style="color: #f39c12;">(Admin)</span>{% endif %}
+                            {% if current_user.is_admin %}<span style="color: #c97c5d;">(Admin)</span>{% endif %}
                         </span>
                         {% if current_user.is_admin %}
-                        <a href="/admin/users" class="btn" style="background: #f39c12; padding: 8px 16px; font-size: 13px;">Manage Users</a>
+                        <a href="/admin/users" class="btn" style="background: #c97c5d; padding: 8px 16px; font-size: 13px;">Manage Users</a>
                         {% endif %}
                         <a href="/change-password" class="btn secondary" style="padding: 8px 16px; font-size: 13px;">Change password</a>
                         <a href="/logout" class="btn secondary" style="padding: 8px 16px; font-size: 13px;">Logout</a>
@@ -191,11 +224,11 @@
                         <button onclick="reloadTPNs()" class="secondary">Reload TPNs</button>
                     </div>
                     {% endif %}
-                    <span id="nextCheckCountdown" style="color: #ecf0f1; font-size: 12px; text-align: right;">
+                    <span id="nextCheckCountdown" style="color: #474954; font-size: 12px; text-align: right;">
                         Loading...
                     </span>
                     {% if current_user.is_admin %}
-                    <div id="terminalCounts" style="color: #ecf0f1; font-size: 11px; text-align: right; margin-top: 5px;">
+                    <div id="terminalCounts" style="color: #474954; font-size: 11px; text-align: right; margin-top: 5px;">
                         <div>Steam Terminals: <span id="steamCount">-</span></div>
                     </div>
                     {% endif %}
@@ -203,6 +236,7 @@
                 {% else %}
                 <a href="/login" class="btn">Login</a>
                 {% endif %}
+            </div>
             </div>
         </div>
     </header>
