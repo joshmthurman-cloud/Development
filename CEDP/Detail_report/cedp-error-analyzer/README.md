@@ -52,31 +52,26 @@ Frontend runs at **http://localhost:3000**.
 
 ## Running on Ubuntu server (e.g. 10.200.0.235)
 
-Backend on **port 8093**, frontend on **port 3000**. After pulling the repo on the server:
+Users open **port 8093** (frontend). Backend runs on **port 8900**. Backend reloads on file changes; if either process exits, `run-all.sh` restarts it.
 
-**1. Backend (terminal 1):**
+**One command (recommended):**
 ```bash
 cd /path/to/cedp-error-analyzer
-chmod +x run-backend.sh
-./run-backend.sh
+cd frontend && cp env.example .env && cd ..
+# Edit frontend/.env if your server IP is different: NEXT_PUBLIC_API_URL=http://10.200.0.235:8900
+chmod +x run-all.sh run-backend.sh run-frontend.sh
+./run-all.sh
 ```
-Backend will be at **http://10.200.0.235:8093** (and http://localhost:8093).
+Users open **http://10.200.0.235:8093**. Press Ctrl+C to stop both.
 
-**2. Frontend (terminal 2):**
-```bash
-cd /path/to/cedp-error-analyzer/frontend
-cp env.example .env
-# Edit .env if your server IP is different: NEXT_PUBLIC_API_URL=http://10.200.0.235:8093
-cd ..
-chmod +x run-frontend.sh
-./run-frontend.sh
-```
-Frontend will be at **http://10.200.0.235:3000**. Open that URL in a browser; the app will call the backend at the URL in `.env`.
+**Or run backend and frontend in separate terminals:**
+- Terminal 1: `./run-backend.sh` (http://10.200.0.235:8900)
+- Terminal 2: `./run-frontend.sh` (http://10.200.0.235:8093)
 
-**Firewall:** If needed, allow ports 8093 and 3000:
+**Firewall:** Allow ports 8093 (frontend) and 8900 (backend):
 ```bash
 sudo ufw allow 8093/tcp
-sudo ufw allow 3000/tcp
+sudo ufw allow 8900/tcp
 sudo ufw reload
 ```
 
