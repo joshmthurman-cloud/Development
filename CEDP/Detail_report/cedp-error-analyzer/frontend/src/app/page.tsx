@@ -4,7 +4,7 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import type { TransactionResult, Failure } from "./types";
 import styles from "./page.module.css";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -102,7 +102,7 @@ export default function Home() {
         e instanceof TypeError ||
         (e instanceof Error && (e.message === "Failed to fetch" || e.message.includes("NetworkError")));
       const message = isNetworkError
-        ? "Could not reach the analyzer. Make sure the backend is running (uvicorn on port 8000) and try opening this app at http://localhost:3000."
+        ? "Could not reach the analyzer. Make sure the backend is running and that NEXT_PUBLIC_API_URL points to it (e.g. http://10.200.0.235:8093 on the server)."
         : e instanceof Error
           ? e.message
           : "Upload failed";

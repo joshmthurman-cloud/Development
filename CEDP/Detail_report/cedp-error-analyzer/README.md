@@ -50,6 +50,36 @@ Frontend runs at **http://localhost:3000**.
 - **Error key:** `backend/app/data/ErrorKey.csv` (included).
 - **Transaction file:** You upload `Content.xlsx` via the UI.
 
+## Running on Ubuntu server (e.g. 10.200.0.235)
+
+Backend on **port 8093**, frontend on **port 3000**. After pulling the repo on the server:
+
+**1. Backend (terminal 1):**
+```bash
+cd /path/to/cedp-error-analyzer
+chmod +x run-backend.sh
+./run-backend.sh
+```
+Backend will be at **http://10.200.0.235:8093** (and http://localhost:8093).
+
+**2. Frontend (terminal 2):**
+```bash
+cd /path/to/cedp-error-analyzer/frontend
+cp env.example .env
+# Edit .env if your server IP is different: NEXT_PUBLIC_API_URL=http://10.200.0.235:8093
+cd ..
+chmod +x run-frontend.sh
+./run-frontend.sh
+```
+Frontend will be at **http://10.200.0.235:3000**. Open that URL in a browser; the app will call the backend at the URL in `.env`.
+
+**Firewall:** If needed, allow ports 8093 and 3000:
+```bash
+sudo ufw allow 8093/tcp
+sudo ufw allow 3000/tcp
+sudo ufw reload
+```
+
 ## API
 
 - `GET /health` — returns `{ "ok": true }`.
