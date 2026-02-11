@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block content %}
+<a href="/" class="back-link">← Back to All Terminals</a>
+
+<div class="card">
+    <h2>Merchant: <a href="/" style="color: inherit; text-decoration: underline;">{{ merchant_display }}</a></h2>
+    <p><strong>Total Terminals:</strong> {{ total_terminals }}</p>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+    <div class="card">
+        <h3>Today's Statistics</h3>
+        <table>
+            <tr>
+                <td><strong>Total Checks:</strong></td>
+                <td>{{ today_stats.total_checks }}</td>
+            </tr>
+            <tr>
+                <td><strong>Online Percentage:</strong></td>
+                <td>
+                    <span style="font-size: 24px; font-weight: bold; color: {% if today_stats.online_percentage >= 90 %}#27ae60{% elif today_stats.online_percentage >= 70 %}#f39c12{% else %}#e74c3c{% endif %};">
+                        {{ today_stats.online_percentage }}%
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Online:</strong></td>
+                <td>{{ today_stats.online }}</td>
+            </tr>
+            <tr>
+                <td><strong>Offline:</strong></td>
+                <td>{{ today_stats.offline }}</td>
+            </tr>
+            <tr>
+                <td><strong>Disconnect:</strong></td>
+                <td>{{ today_stats.disconnect }}</td>
+            </tr>
+            <tr>
+                <td><strong>Error:</strong></td>
+                <td>{{ today_stats.error }}</td>
+            </tr>
+            <tr>
+                <td><strong>Unknown:</strong></td>
+                <td>{{ today_stats.unknown }}</td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="card">
+        <h3>Date Range Statistics</h3>
+        <form method="get" action="/merchant/{{ merchant }}" style="margin-bottom: 15px;">
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">From Date:</label>
+                    <input type="date" name="start_date" value="{{ start_date or '' }}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">To Date:</label>
+                    <input type="date" name="end_date" value="{{ end_date or '' }}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <button type="submit" class="btn">Apply Date Range</button>
+                {% if start_date %}
+                <a href="/merchant/{{ merchant }}" class="btn secondary" style="text-align: center; display: block;">Clear Date Range</a>
+                {% endif %}
+            </div>
+        </form>
+        {% if range_stats %}
+        <table>
+            <tr>
+                <td><strong>Total Checks:</strong></td>
+                <td>{{ range_stats.total_checks }}</td>
+            </tr>
+            <tr>
+                <td><strong>Online Percentage:</strong></td>
+                <td>
+                    <span style="font-size: 24px; font-weight: bold; color: {% if range_stats.online_percentage >= 90 %}#27ae60{% elif range_stats.online_percentage >= 70 %}#f39c12{% else %}#e74c3c{% endif %};">
+                        {{ range_stats.online_percentage }}%
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Online:</strong></td>
+                <td>{{ range_stats.online }}</td>
+            </tr>
+            <tr>
+                <td><strong>Offline:</strong></td>
+                <td>{{ range_stats.offline }}</td>
+            </tr>
+            <tr>
+                <td><strong>Disconnect:</strong></td>
+                <td>{{ range_stats.disconnect }}</td>
+            </tr>
+            <tr>
+                <td><strong>Error:</strong></td>
+                <td>{{ range_stats.error }}</td>
+            </tr>
+            <tr>
+                <td><strong>Unknown:</strong></td>
+                <td>{{ range_stats.unknown }}</td>
+            </tr>
+        </table>
+        {% else %}
+        <p style="color: #666; font-style: italic;">Select a date range to view statistics</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <h2>Terminals for {{ merchant_display }}</h2>
+    <table id="terminalsTable">
+        <thead>
+            <tr>
+                <th onclick="sortTable(0)">TPN ↕</th>
+                <th onclick="sortTable(1)">Latest Status ↕</th>
+                <th onclick="sortTable(2)">Online % ↕</th>
+                <th onclick="sortTable(3)">Total Checks ↕</th>
+                <th onclick="sortTable(4)">Online Count ↕</th>
+                <th onclick="sortTable(5)">Offline Count ↕</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for terminal in terminal_stats %}
+            <tr onclick="window.location='/terminal/{{ terminal.tpn }}?from_merchant={{ merchant }}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}'" style="cursor: pointer;">
+                <td>
+                    <strong>{{ terminal.tpn }}</strong>
+                    <a href="/terminal/{{ terminal.tpn }}?from_merchant={{ merchant }}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" target="_blank" onclick="event.stopPropagation();" style="margin-left: 8px; text-decoration: none; color: #3498db; font-size: 12px;" title="Open in new tab">🔗</a>
+                </td>
+                <td>
+                    <span class="status {{ terminal.latest_status }}">
+                        {{ terminal.latest_status }}
+                    </span>
+                </td>
+                <td>
+                    <span style="color: {% if terminal.online_percentage >= 90 %}#27ae60{% elif terminal.online_percentage >= 70 %}#f39c12{% else %}#e74c3c{% endif %}; font-weight: 600;">
+                        {{ terminal.online_percentage }}%
+                    </span>
+                </td>
+                <td>{{ terminal.total_checks }}</td>
+                <td>{{ terminal.online_count }}</td>
+                <td>{{ terminal.offline_count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let sortDirection = {};
+    
+    function sortTable(columnIndex) {
+        const table = document.getElementById('terminalsTable');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        
+        const direction = sortDirection[columnIndex] || 'asc';
+        sortDirection[columnIndex] = direction === 'asc' ? 'desc' : 'asc';
+        
+        rows.sort((a, b) => {
+            let aText = a.cells[columnIndex].textContent.trim();
+            let bText = b.cells[columnIndex].textContent.trim();
+            
+            // Try to parse as number
+            let aVal = parseFloat(aText) || aText;
+            let bVal = parseFloat(bText) || bText;
+            
+            // Special handling for Online % column (column 2)
+            if (columnIndex === 2) {
+                // Extract percentage number
+                const aMatch = aText.match(/([\d.]+)/);
+                const bMatch = bText.match(/([\d.]+)/);
+                aVal = aMatch ? parseFloat(aMatch[1]) : 0;
+                bVal = bMatch ? parseFloat(bMatch[1]) : 0;
+            }
+            
+            if (typeof aVal === 'number' && typeof bVal === 'number') {
+                return direction === 'asc' ? aVal - bVal : bVal - aVal;
+            }
+            
+            if (direction === 'asc') {
+                return aText > bText ? 1 : -1;
+            } else {
+                return aText < bText ? 1 : -1;
+            }
+        });
+        
+        rows.forEach(row => tbody.appendChild(row));
+        
+        // Update header arrows
+        const headers = table.querySelectorAll('th');
+        headers.forEach((h, i) => {
+            if (i === columnIndex) {
+                h.textContent = h.textContent.replace(/↕|↑|↓/g, '') + (direction === 'asc' ? ' ↑' : ' ↓');
+            } else {
+                h.textContent = h.textContent.replace(/↕|↑|↓/g, '') + ' ↕';
+            }
+        });
+    }
+</script>
+{% endblock %}
