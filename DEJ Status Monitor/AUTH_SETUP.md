@@ -57,6 +57,13 @@ This creates an admin account that can:
 
 Account creation and password-reset emails are sent only if email is configured. Without it you'll see: *"SendGrid API key not configured, skipping notification"* in the logs.
 
+**Create `.env` on the server:** The repo does not include a `.env` file (it is gitignored). Copy the template and edit it:
+
+```bash
+cp env.example .env
+# Then edit .env and add your SENDGRID_API_KEY (and SECRET_KEY)
+```
+
 **Option A – SendGrid (default)**
 
 1. Create a SendGrid account and get an API key: https://sendgrid.com/
