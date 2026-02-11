@@ -52,17 +52,22 @@ Frontend runs at **http://localhost:3000**.
 
 ## Running on Ubuntu server (e.g. 10.200.0.235)
 
-Users open **port 8093** (frontend). Backend runs on **port 8900**. Backend reloads on file changes; if either process exits, `run-all.sh` restarts it.
+Users open **port 8093** (frontend). Backend runs on **port 8900**. Backend reloads on file changes; if either process exits, it is restarted.
 
-**One command (recommended):**
+**One command, keeps running after you close the terminal (recommended on server):**
 ```bash
 cd /path/to/cedp-error-analyzer
 cd frontend && cp env.example .env && cd ..
 # Edit frontend/.env if your server IP is different: NEXT_PUBLIC_API_URL=http://10.200.0.235:8900
-chmod +x run-all.sh run-backend.sh run-frontend.sh
+chmod +x run-all-persistent.sh run-all-stop.sh run-all.sh run-backend.sh run-frontend.sh
+./run-all-persistent.sh
+```
+Then close the terminal; the app keeps running. Users open **http://10.200.0.235:8093**. Logs go to `run-all.log`. To stop later: `./run-all-stop.sh`.
+
+**Foreground (stop with Ctrl+C):**
+```bash
 ./run-all.sh
 ```
-Users open **http://10.200.0.235:8093**. Press Ctrl+C to stop both.
 
 **Or run backend and frontend in separate terminals:**
 - Terminal 1: `./run-backend.sh` (http://10.200.0.235:8900)
