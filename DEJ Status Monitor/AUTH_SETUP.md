@@ -53,28 +53,42 @@ This creates an admin account that can:
 - Control Steam/Denovo view access
 - Access all merchants and terminals
 
-### 4. Configure Email Notifications (Optional)
+### 4. Configure Email Notifications (Required for account creation & password reset)
 
-Create a `.env` file in the project root with the following:
+Account creation and password-reset emails are sent only if email is configured. Without it you'll see: *"SendGrid API key not configured, skipping notification"* in the logs.
+
+**Option A – SendGrid (default)**
+
+1. Create a SendGrid account and get an API key: https://sendgrid.com/
+2. In `.env`:
 
 ```env
-# Secret key for JWT tokens and session management
-# Generate a random string: python -c "import secrets; print(secrets.token_urlsafe(32))"
-SECRET_KEY=your-random-secret-key-here
+SENDGRID_API_KEY=SG.xxxxxxxxxxxxxxxxxxxxxxxx
+NOTIFICATION_EMAIL=josh.thurman@curbstone.com
+NOTIFICATION_SENDER_NAME=Terminal Status Monitor
+```
 
-# Email notification settings
-NOTIFICATION_EMAIL=josh@curbstone.com
+**Option B – SMTP (e.g. Office 365)**
+
+1. In `.env` set the provider and SMTP details:
+
+```env
+EMAIL_PROVIDER=smtp
+NOTIFICATION_EMAIL=josh.thurman@curbstone.com
 NOTIFICATION_EMAIL_PASSWORD=your-app-password-here
-
-# SMTP settings (defaults to Office 365)
 SMTP_SERVER=smtp.office365.com
 SMTP_PORT=587
 ```
 
-**Important for Microsoft/Office 365:**
-- You may need to create an "App Password" instead of using your regular password
-- Go to: https://account.microsoft.com/security > Advanced security options > App passwords
-- Generate a new app password and use that in `NOTIFICATION_EMAIL_PASSWORD`
+For Microsoft/Office 365 you may need an "App Password": https://account.microsoft.com/security → Advanced security options → App passwords.
+
+**Other .env settings**
+
+```env
+# Required for sessions
+SECRET_KEY=your-random-secret-key-here
+# (Generate: python -c "import secrets; print(secrets.token_urlsafe(32))")
+```
 
 ### 5. Start the Application
 
