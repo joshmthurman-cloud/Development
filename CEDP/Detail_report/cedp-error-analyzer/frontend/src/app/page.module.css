@@ -1,0 +1,399 @@
+.page {
+  min-height: 100vh;
+  padding: 2rem;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+.main {
+  max-width: calc(100vw - 32px);
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 8px;
+  box-sizing: border-box;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.titleButton {
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.titleButton:hover {
+  text-decoration: underline;
+}
+
+.uploadSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.fileInput {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.dropZone {
+  width: 100%;
+  max-width: 420px;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 2px dashed #bbb;
+  border-radius: 8px;
+  background: #fafafa;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  padding: 1.5rem;
+  box-sizing: border-box;
+}
+
+.dropZone:hover {
+  border-color: #888;
+  background: #f5f5f5;
+}
+
+.dropZoneActive {
+  border-color: #171717;
+  background: #eee;
+}
+
+.dropZoneHasFile {
+  border-style: solid;
+  border-color: #2e7d32;
+  background: #e8f5e9;
+}
+
+.dropZoneText {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.dropZoneSub {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.dropZoneFile {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1b5e20;
+}
+
+.analyzeWrap {
+  margin-top: 1.25rem;
+  display: flex;
+  justify-content: center;
+}
+
+.submitBtn {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 6px;
+  border: none;
+  background: #171717;
+  color: #fff;
+  cursor: pointer;
+}
+
+.submitBtn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #c00;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  text-align: center;
+  width: 100%;
+}
+
+.results {
+  margin-top: 1rem;
+  width: 100%;
+  max-height: 88vh;
+  overflow: auto;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th,
+.table td {
+  border: 1px solid #ddd;
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+}
+
+.table th {
+  background: #f0f0f0;
+  font-weight: 600;
+}
+
+/* Sticky header row */
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f0f0f0;
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Sticky first column (Merchant Name) - header */
+.table thead th:first-of-type {
+  left: 0;
+  z-index: 3;
+  box-shadow: 2px 2px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Sticky first column - body cells (exclude accordion row) */
+.table tbody td:first-of-type:not(.accordionCell) {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: #fff;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.06);
+}
+
+.table tbody tr:nth-child(odd) td:first-of-type:not(.accordionCell) {
+  background: #fafafa;
+}
+
+.table tbody tr:nth-child(odd) {
+  background: #fafafa;
+}
+
+.cellError {
+  background: #ffebee !important;
+  color: #b71c1c;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.cellWarning {
+  background: #fff8e1 !important;
+  color: #e65100;
+  cursor: pointer;
+}
+
+.cellDropdown {
+  z-index: 1000;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0.75rem 1rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.cellDropdownTitle {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.35rem;
+  color: #171717;
+}
+
+.cellDropdownColumn {
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.cellDropdownList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cellDropdownItem {
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 0.9rem;
+}
+
+.cellDropdownItem:last-child {
+  border-bottom: none;
+}
+
+.cellDropdownMeta {
+  font-size: 0.85rem;
+  color: #555;
+  margin-top: 0.25rem;
+}
+
+.cellDropdownDesc {
+  margin: 0.4rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #333;
+}
+
+.cellDropdownNotes {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: #666;
+  white-space: pre-wrap;
+}
+
+.cellDropdownAttrs {
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.yellowCellDropdown {
+  z-index: 1000;
+  background: #fffbf0;
+  border: 1px solid #e65100;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0.75rem 1rem;
+}
+
+.yellowCellDropdownTitle {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+  color: #e65100;
+}
+
+.yellowCellDropdownMessage {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #333;
+  white-space: pre-wrap;
+}
+
+.accordionCell {
+  padding: 0 !important;
+  vertical-align: top;
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+}
+
+.accordion {
+  padding: 1rem;
+  background: #fff;
+}
+
+.expandBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.highlightPanel {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: #f0f7ff;
+  border-left: 4px solid #0066cc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.sourceAmountMessage {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: #fff8e1;
+  border-left: 4px solid #e65100;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #e65100;
+  font-weight: 500;
+}
+
+.failureList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.failureItem,
+.failureItemSelected {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid #e0e0e0;
+  background: #fafafa;
+}
+
+.failureItem:hover {
+  background: #f0f0f0;
+}
+
+.failureItemSelected {
+  background: #e8f0fe;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
+}
+
+.failureMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.failureDesc {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.failureNotes {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: #666;
+  white-space: pre-wrap;
+}
+
+.failureAttrs {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: #666;
+}

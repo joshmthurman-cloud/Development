@@ -1,0 +1,189 @@
+Error Codes,Description,Field Name,content column,Type,Size,M/C/O,Notes
+CS-0001,"TC05 Number of payment forms is not one of the following ((space), 1, 2, 3, 4, 5, 6, 7, 8, 9, +)",Number of Payment Forms,TC05TCR0 Number of Payment Forms,AN,1,M,"Specifies the number of payments used for the transaction:
+ 
+ 1 or space: Paid in full on this single Visa card
+ 
+ 2-9: Additional partial payments made
+ 
+ + (plus): Greater than 9"
+CS-0002,"TC05 Purchase Id Format is not one of the following ((space), 0, 1, 5)",Purchase Identifier Format,TC05TCR1 Purchase Identifier Format,AN,1,M,"Must be:
+ 
+ 1: Order number
+ 
+ 5: Invoice Number
+ 
+ Space or 0: Field not used"
+CS-0003,"TC05 Purchase Id is empty but the Purchase Id Format is not one of the following ((space), 0), thus expecting a value",Purchase Identifier,,AN,25,C,"Unique order or invoice number for the transaction.
+ The entry must be left-justified. Unused positions of the field must be space-filled.
+ For Fleet Merchant, if the card is configured to prompt for Fleet Work Order, provide the value entered by the cardholder. Otherwise, leave this field blank."
+CS-0004,"TC05 Local Tax Included is not one of the following (1, 2)",Local Tax Included,TC05TCR6 Local Tax,UN,12,M,"Two decimal places are implied.
+ Local Tax is the total amount of Sales Tax collected by the merchant on this invoice.
+ Amount listed must accurately reflect what was captured at the time of the transaction. If no tax was collected or tax amount is not available, enter zeros. Tax estimation is not allowed."
+CS-0005,TC05 Local Tax Included must be 1 when Local Tax Amount is provided,Local Tax Included,"TC05TCR6
+Local Tax Included",UN,1,M,"Must be 1 or 2
+ 
+ 1: Tax collected; indicates that the merchant is able to provide the amount of sales tax collected.
+ 
+ 2: Transaction is not subject to tax
+ For Tax Exempt invoice, set Local Tax Included to 2 and Local Tax Amount to 0."
+CS-0006,TC05 Local Tax Included must be 2 when Local Tax Amount is not provided,Local Tax Included,"TC05TCR6
+Local Tax Included",UN,1,M,"Must be 1 or 2
+ 
+ 1: Tax collected; indicates that the merchant is able to provide the amount of sales tax collected.
+ 
+ 2: Transaction is not subject to tax
+ For Tax Exempt invoice, set Local Tax Included to 2 and Local Tax Amount to 0."
+CS-0007,TC05 National Tax Amount is not 0,,,,,,
+CS-0008,TC05 National Tax Included is not 0,,,,,,
+CS-0009,TC05 Message ID is empty,Message Identifier,"TC05TCR6
+Message Identifier",AN,15,M,"The acquirer assigns a unique Message Identifier (across the network) to each commercial card transaction that generates TC 50 records containing additional transaction detail. For commercial card transactions, the acquirer should populate the Message Identifier, as:
+ 
+ Acquirers must assign a unique Message Identifier to all commercial card transactions that have corresponding TC 50 enhanced data.
+ 
+ Visa recommends using the Transaction Identifier to populate the Message Identifier, but only if no other payment will share the same Transaction Identifier.
+ 
+ Visa strongly recommends using the Acquirer Identifier within the construct of the Message ID if the Transaction Identifier is not an option.
+ The Message Identifier value is mandatory in this field if the transaction also includes corresponding Level 3 data. If no corresponding Level 3 data is included with the transaction, this data element requirement identifier is optional."
+CS-0010,TC05 Time of Purchase (HHMM) is invalid,Time of Purchase,TC05TCR6 Time of Purchase,UN,4,C,"If it appears on the invoice, it must be provided here.
+ This data captures the local time in which the transaction took place in the format:
+ HHMM
+ Where HH = hours"
+CS-0011,"TC05 Source Amount must equal to the aggregated value of Line Items Totals, Tax(es), Invoice-Level Shipping, and Invoice-Level Discount",Arithmetic validation of the transaction,TC05TCR0 Source Amount,,,M,"Transaction must arithmetically validate including any partial payments and credits.
+ TC 50 TCR 0 PURCHL Line Item Total Amount must reflect this calculation: (Quantity * Unit Cost) - Discount per Line Item.
+ TC 05 Source Amount must reflect the amount charged for the transaction. Source Amount must equal the logical aggregate of the transaction parts:
+ Line Item Totals from all associated PURCHL records - PURCHA Discount Amount + PURCHA Freight/Shipping Amount + C&S Local Tax and National Tax Amount."
+TC50-0001,Missing TC50 PURCHA,Service Identifier,,AN,6,M,Must contain the value: PURCHA
+TC50-0002,Missing TC50 PURCHL,Service Identifier,,AN,6,M,Must contain: PURCHL
+TC50-0003,Multiple TC50 type found,,,,,,
+TC50-0004,Duplicate TC50 PURCHA found,,,,,,
+TC50-0005,Duplicate TC50 PURCHL found,,,,,,
+TC50-0006,TC50 Destination Postal/ZIP Code doesn't respect the format of the Destination Country Code,Destination Postal/ZIP Code,Destination Postal/ZIP Code,AN,10,C,"Must be provided if shipment is involved and captured on the invoice; should reflect the destination country format.
+ US: Can be provided in this format:
+ 
+ 5 digits (ex: 10001)
+ 
+ 5 digits + 4 digits (ex: 100010000)
+ 
+ 5 digits + ""-"" + 4 digits (ex: 10001-0000)
+ Canada: ANA[space]NAN"
+TC50-0007,TC50 Destination Country Code is not a valid ISO Country Code,Destination Country Code,Destination Country Code,AN,3,C,"Must be provided if shipment is involved. Destination Country code for the goods or services on the invoice using the ISO country code (ISO provides a 2 Alphas, 3 Alphas, and 3-digits country code; any can be used here).
+ For further details of the code to use, see the Country and Currency Codes chapter in BASE II Data Clearing Codes Manual."
+TC50-0009,TC50 PURCHA Order Date (YYMMDD) is invalid,Order Date (YYMMDD),Order Date,UN,6,C,"Date the original order was placed. If date appears on the invoice, it must be provided in this field.
+ Format:
+ YYMMDD
+ Where YY = last two digits of the year, MM = the two-digit month (01 - 12), and DD = the two-digit day (01-31)."
+TC50-0010,"TC50 PURCHA VAT/Tax Amount (Freight/ Shipping) should be 0, since Freight/Shipping Amount is 0",VAT/Tax Amount (Freight/Shipping),VAT/Tax Amount (Freight/Shipping),UN,12,C,"Visa prefers that Freight/Shipping Detail is sent as a separate Line Item Record (PURCHL). If so, the PURCHA field must be all zeros.
+ Visa to retire this field soon.
+ Two decimal places are implied.
+ If not sent as separate line item record, this field contains the amount of Sales Tax charged on the shipping amount (in accordance with the Tax Treatment)."
+TC50-0012,"TC50 PURCHA VAT/Tax Rate (Freight/ Shipping) should be 0, since Freight/Shipping Amount is 0",VAT/Tax Rate (Freight/Shipping),VAT/Tax Rate (Freight/Shipping),UN,4,C,"Visa prefers that Freight/Shipping Detail is sent as a separate Line Item Record (PURCHL). If so, the PURCHA field must be all zeros.
+ Visa to retire this field soon.
+ Two decimal places are implied.
+ If not sent as separate line item record, this field contains the Tax rate charged on the shipping amount (in accordance with the Tax Treatment)."
+TC50-0013,"TC50 PURCHA Auth Code is not blank, must equal TC05 Auth Code",Authorization Code,TC05TCR0 Authorization Code,AN,6,O,The field must contain the Authorization Code as provided on the TC 05 TCR 0 position 152-157/VIP Field 38 Authorization Identification Response.
+TC50-0014,"TC50 PURCHA Invoice level Discount Treatment Code is not one of the following (0, 1, 2)",Invoice Level Discount Treatment Code,Invoice Level Discount Treatment Code,UN,1,O,"Identify how to treat a discount if it was provided at the invoice level.
+ Invoice Level Discount Treatment equals:
+ 
+ 0: If no invoice level discounts apply for this invoice.
+ 
+ 1: If Tax was calculated on Post-Discount total.
+ 
+ 2: If Tax was calculated on Pre-Discount total."
+TC50-0015,"TC50 PURCHA Tax Treatment is not one of the following (0, 1, 2, 3, 4)",Tax Treatment,Tax Treatments,UN,1,O,"Provides receiver with details on how the tax is calculated. If provided, must be 0, 1, 2, 3, or 4.
+ Prices provided on the invoice by the Merchant:
+ 
+ 0: Net prices with tax calculated at line item level (NLL)
+ 
+ 1: Net prices with tax calculated at invoice level (NIL)
+ 
+ 2: Gross prices given with tax information provided at line item level (GLL)
+ 
+ 3: Gross prices given with tax information provided at invoice level (GIL)
+ 
+ 4: No tax applies (small Merchant) on the invoice for the transaction (NON)"
+TC50-0016,"TC50 PURCHA Discount Amount Signage is not one of the following ((space), C, D)",Discount Amount Signage,Discount Amount Signage,AN,1,O,"This field specifies if the Invoice Level Discount Amount is a credit or debit value:
+ 
+ D or space: Debit (a charge on the invoice)
+ 
+ C: Credit (a refund of discount on the invoice)
+ A zero value Discount Amount must have D in this field"
+TC50-0017,"TC50 PURCHA Freight/Shipping Amount Signage is not one of the following ((space), C, D)",Freight/Shipping Amount Signage,Freight/Shipping Amount Signage,AN,1,O,"This field specifies if the Freight/Shipping Amount is a credit or debit value:
+ 
+ D or space: Debit (a charge on the invoice)
+ 
+ C: Credit (a refund of discount on the invoice)
+ A zero value Freight/Shipping Amount must have D in this field"
+TC50-0018,"TC50 PURCHA Duty Amount Signage is not one of the following ((space), C, D)",Duty Amount Signage,Duty Amount Signage,AN,1,O,"This field specifies if the Duty Amount is a credit or debit value:
+ 
+ D or space: Debit (a charge on the invoice)
+ 
+ C: Credit (a refund of discount on the invoice)
+ A zero value Duty Amount must have D in this field"
+TC50-0019,"TC50 PURCHA VAT/Tax Amount Signage is not one of the following ((space), C, D)",VAT/Tax Amount Signage,VAT/Tax Amount Signage,AN,1,O,"This field specifies if the Freight/Shipping VAT/Tax Amount is a credit or debit value:
+ 
+ D or space: Debit (a charge on the invoice)
+ 
+ C: Credit (a refund of discount on the invoice)
+ A zero value Freight/Shipping VAT/Tax Amount must have D in this field"
+TC50-1001,"TC50 PURCHL Item Description must not be blank, null or zeros",Item Descriptor,Item Descriptor,AN,26,M,"Must provide a readable description of the item or service.
+ May contain a freeform text on “COMMENT” line."
+TC50-1002,"TC50 PURCHL Product Code must not be blank, null or zeros",Product Code,Product Code,AN,12,M,"Must provide a unique product code associated to the item or service.
+ Product code can be:
+ 
+ Merchant's product code
+ 
+ Manufacturer's product code
+ 
+ Buyer's product code
+ Typically, the SKU or identifier by which the Merchant tracks and prices the item or service. Must always be provided for every line item.
+ May be blank on COMMENT line only."
+TC50-1003,"TC50 PURCHL Unit of Measure must not be blank, null or zeros",Unit of Measure,Unit of Measure,AN,12,M,"Must provide a readable Unit of Measure code.
+ May be blank on COMMENT line only."
+TC50-1004,TC50 PURCHL Line Item Total amount must be equal to unit cost multiplied by quantity minus discount amount per line item,Line Item Total,Line Item Total,UN,12,M,"Total amount for this item or service (in accordance with the Tax Treatment and the Discount per Line Item).
+ Line Item Total = (Quantity * Unit Cost) - Discount per Line Item
+ There are two implied decimal places."
+TC50-1005,"TC50 PURCHL Line Item Detail Indicator is not one of the following (0, 1, 2, 3, 4, 5)",Line Item Detail Indicator,Line Item Detail Indicator,UN,1,M,"Must be 0 or 1, 2 or 3, 4 or 5 – Each transaction has even values with one odd value.
+ Odd-numbered for the last line on the invoice, otherwise even-numbered:
+ 
+ 0 or 1: Normal line item
+ 
+ 2 or 3: Credit Line Item
+ 
+ 4 or 5: Payment line item"
+TC50-1006,"TC50 PURCHL Line Item Detail Indicator, every line must be an even value, except final line which must be odd",Line Item Detail Indicator,Line Item Detail Indicator,UN,1,M,"Must be 0 or 1, 2 or 3, 4 or 5 – Each transaction has even values with one odd value.
+ Odd-numbered for the last line on the invoice, otherwise even-numbered:
+ 
+ 0 or 1: Normal line item
+ 
+ 2 or 3: Credit Line Item
+ 
+ 4 or 5: Payment line item"
+TC50-1007,"TC50 PURCHL Line Item Level Discount Treatment Code must be 0, 1 or 2",Line Item Level Discount Treatment Code,Line Item Level Discount Treatment Code,UN,1,O,"Identify if a discount was provided for this line item.
+ Line Item Discount Treatment equals:
+ 
+ 0: If no discounts apply for the line item
+ 
+ 1: If tax was calculated on Post-Discount totals
+ 
+ 2: If tax was calculated on Pre-Discount totals"
+TC50-1011,TC50 PURCHL Line Item Detail Sequence Number must be sequential (not necessary to start the sequence with 1),Item Sequence Number,Item Sequence Number,UN,3,M,Must contain: 000
+TC50-2001,TC50 PURCHL Line-item description is blank or effectively blank,Item Descriptor,Item Descriptor,AN,26,M,"Must provide a readable description of the item or service.
+ May contain a freeform text on “COMMENT” line."
+TC50-2002,TC50 PURCHL Line-item description is the same or nearly the same as the merchant name as indicated in the transaction,Item Descriptor,Item Descriptor,AN,26,M,"Must provide a readable description of the item or service.
+ May contain a freeform text on “COMMENT” line."
+TC50-2003,"TC50 PURCHL Line-item product code is the same as the cardholder product ID (e.g., 'S', 'K', 'S1') as indicated in the transaction",Product Code,Product Code,AN,12,M,"Must provide a unique product code associated to the item or service.
+ Product code can be:
+ 
+ Merchant's product code
+ 
+ Manufacturer's product code
+ 
+ Buyer's product code
+ Typically, the SKU or identifier by which the Merchant tracks and prices the item or service. Must always be provided for every line item.
+ May be blank on COMMENT line only."
+TC50-2004,TC50 PURCHL Line-item description is generic and effectively provides no detail on what was purchased,Item Descriptor,Item Descriptor,AN,26,M,"Must provide a readable description of the item or service.
+ May contain a freeform text on “COMMENT” line."
+TC50-2005,TC50 PURCHL Line-item description is just a single character,Item Descriptor,Item Descriptor,AN,26,M,"Must provide a readable description of the item or service.
+ May contain a freeform text on “COMMENT” line."
+TC50-2006,TC50 PURCHL Line-item description is completely contained within the merchant name,Item Descriptor,Item Descriptor,AN,26,M,"Must provide a readable description of the item or service.
+ May contain a freeform text on “COMMENT” line."
