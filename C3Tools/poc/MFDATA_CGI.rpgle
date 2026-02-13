@@ -31,12 +31,8 @@ dcl-s buf      char(64000);
 dcl-s bufLen   int(10);
 dcl-s firstRec ind inz(*on);
 
-  // Physical file C3FP3020 - input only (read).
-  // Library containing C3FP3020 must be in job's library list when CGI runs.
+  // Physical file C3FP3020 - input only (read). Read into file buffer (no LIKEREC).
 dcl-f c3fp3020 usage(*input);
-
-  // Record layout - must match C3FP3020 format (MFUKEY, MFDATE, MFTIME, ...)
-dcl-ds rec likerec(c3fp3020 : *input);
 
 //**********************************************************************
 // Main - read C3FP3020 and write HTTP response with JSON table data
@@ -56,7 +52,7 @@ dcl-proc MFDATA_CGI;
   QtmhWrStout(%addr(buf) : bufLen : apiErrData);
 
   // 3. Read physical file and output each record as JSON (read-only, no adds)
-  read(e) c3fp3020 rec;
+  read(e) c3fp3020;
   dow not %eof(c3fp3020);
     if not firstRec;
       buf = ',';
@@ -65,135 +61,144 @@ dcl-proc MFDATA_CGI;
     endif;
     firstRec = *off;
 
-    // All 124 fields - CHAR as quoted strings, PACKED as numbers (LIKEREC names from file)
-    buf = ('' + CRLF + '  {"MFUKEY":"' + %trim(rec.MFUKEY) +
-          '","MFDATE":"' + %trim(rec.MFDATE) +
-          '","MFTIME":"' + %trim(rec.MFTIME) +
-          '","MFPRCD":"' + %trim(rec.MFPRCD) +
-          '","MFPRCT":"' + %trim(rec.MFPRCT) +
-          '","MFSETD":"' + %trim(rec.MFSETD) +
-          '","MFSHPD":"' + %trim(rec.MFSHPD) +
-          '","MFSETT":"' + %trim(rec.MFSETT) +
-          '","MFSTUS":"' + %trim(rec.MFSTUS) +
-          '","MFCUST":"' + %trim(rec.MFCUST) +
-          '","MFMRCH":"' + %trim(rec.MFMRCH) +
-          '","MFACNL":"' + %trim(rec.MFACNL) +
-          '","MFSCNL":"' + %trim(rec.MFSCNL) +
-          '","MFTYPE":"' + %trim(rec.MFTYPE) +
-          '","MFTYP2":"' + %trim(rec.MFTYP2) +
-          '","MFRTRN":"' + %trim(rec.MFRTRN) +
-          '","MF$RAQ":"' + %trim(rec.MF$RAQ) +
-          '","MF$RAG":"' + %trim(rec.MF$RAG) +
-          '","MF$RAD":"' + %trim(rec.MF$RAD) +
-          '","MF$FTS":"' + %trim(rec.MF$FTS) +
-          '","MF$SLQ":"' + %trim(rec.MF$SLQ) +
-          '","MF$SLG":"' + %trim(rec.MF$SLG) +
-          '","MF$SLD":"' + %trim(rec.MF$SLD) +
-          '","MF$FCQ":"' + %trim(rec.MF$FCQ) +
-          '","MF$FCG":"' + %trim(rec.MF$FCG) +
-          '","MF$FCD":"' + %trim(rec.MF$FCD) +
-          '","MF$RSD":"' + %trim(rec.MF$RSD) +
-          '","MF$TRP":"' + %trim(rec.MF$TRP) +
-          '","MF$TRR":"' + %trim(rec.MF$TRR) +
-          '","MF$RVQ":"' + %trim(rec.MF$RVQ) +
-          '","MF$RVG":"' + %trim(rec.MF$RVG) +
-          '","MF$RVD":"' + %trim(rec.MF$RVD) +
-          '","MF$LVD":"' + %trim(rec.MF$LVD) +
-          '","MF$RED":"' + %trim(rec.MF$RED) +
-          '","MF$RER":"' + %trim(rec.MF$RER) +
-          '","MF$IED":"' + %trim(rec.MF$IED) +
-          '","MF$IER":"' + %trim(rec.MF$IER) +
-          '","MFRLIB":"' + %trim(rec.MFRLIB) +
-          '","MFRQUE":"' + %trim(rec.MFRQUE) +
-          '","MFRLOC":"' + %trim(rec.MFRLOC) +
-          '","MFATAL":"' + %trim(rec.MFATAL) +
-          '","MFVALU":' + %char(rec.MFVALU) +
-          ',"MFRVND":"' + %trim(rec.MFRVND) +
-          '","MFRVNA":"' + %trim(rec.MFRVNA) +
-          '","MFRDAT":"' + %trim(rec.MFRDAT) +
-          '","MFRTIM":"' + %trim(rec.MFRTIM) +
-          '","MFUSER":"' + %trim(rec.MFUSER) +
-          '","MFSUSR":"' + %trim(rec.MFSUSR) +
-          '","MFPROG":"' + %trim(rec.MFPROG) +
-          '","MFCURP":"' + %trim(rec.MFCURP) +
-          '","MFKEYP":"' + %trim(rec.MFKEYP) +
-          '","MFKEYN":"' + %trim(rec.MFKEYN) +
-          '","MFIERR":"' + %trim(rec.MFIERR) +
-          '","MFXTRA":"' + %trim(rec.MFXTRA) +
-          '","MFPRIO":"' + %trim(rec.MFPRIO) +
-          '","MFBATC":' + %char(rec.MFBATC) +
-          ',"MFSEQN":' + %char(rec.MFSEQN) +
-          ',"MFMETH":"' + %trim(rec.MFMETH) +
-          '","MFREFR":"' + %trim(rec.MFREFR) +
-          '","MFORDR":"' + %trim(rec.MFORDR) +
-          '","MFAMT1":' + %char(rec.MFAMT1) +
-          ',"MFAMT2":' + %char(rec.MFAMT2) +
-          ',"MFSETR":' + %char(rec.MFSETR) +
-          ',"MFSETA":' + %char(rec.MFSETA) +
-          ',"MFCARD":"' + %trim(rec.MFCARD) +
-          '","MFTRK1":"' + %trim(rec.MFTRK1) +
-          '","MFMICR":"' + %trim(rec.MFMICR) +
-          '","MFEDAT":"' + %trim(rec.MFEDAT) +
-          '","MFCVV2":"' + %trim(rec.MFCVV2) +
-          '","MFPINC":"' + %trim(rec.MFPINC) +
-          '","MFADD1":"' + %trim(rec.MFADD1) +
-          '","MFADD2":"' + %trim(rec.MFADD2) +
-          '","MFZIPC":"' + %trim(rec.MFZIPC) +
-          '","MFCITY":"' + %trim(rec.MFCITY) +
-          '","MFSTAT":"' + %trim(rec.MFSTAT) +
-          '","MFNAME":"' + %trim(rec.MFNAME) +
-          '","MFCURR":"' + %trim(rec.MFCURR) +
-          '","MFTERM":"' + %trim(rec.MFTERM) +
-          '","MFSTID":"' + %trim(rec.MFSTID) +
-          '","MFREQN":"' + %trim(rec.MFREQN) +
-          '","MFNUMB":"' + %trim(rec.MFNUMB) +
-          '","MFRETR":"' + %trim(rec.MFRETR) +
-          '","MFLTXF":"' + %trim(rec.MFLTXF) +
-          '","MFDSTZ":"' + %trim(rec.MFDSTZ) +
-          '","MFTRAN":"' + %trim(rec.MFTRAN) +
-          '","MFCHKA":"' + %trim(rec.MFCHKA) +
-          '","MFCHEK":"' + %trim(rec.MFCHEK) +
-          '","MFCHKT":"' + %trim(rec.MFCHKT) +
-          '","MFBDAT":"' + %trim(rec.MFBDAT) +
-          '","MFIDEN":"' + %trim(rec.MFIDEN) +
-          '","MFUSD1":"' + %trim(rec.MFUSD1) +
-          '","MFUSD2":"' + %trim(rec.MFUSD2) +
-          '","MFUSD3":"' + %trim(rec.MFUSD3) +
-          '","MFUSD4":"' + %trim(rec.MFUSD4) +
-          '","MFUSD5":"' + %trim(rec.MFUSD5) +
-          '","MFUSD6":"' + %trim(rec.MFUSD6) +
-          '","MFUSD7":"' + %trim(rec.MFUSD7) +
-          '","MFUSD8":"' + %trim(rec.MFUSD8) +
-          '","MFUSD9":"' + %trim(rec.MFUSD9) +
-          '","MFUSDA":' + %char(rec.MFUSDA) +
-          ',"MFUSDB":' + %char(rec.MFUSDB) +
-          ',"MFUSDC":' + %char(rec.MFUSDC) +
-          ',"MFRREF":"' + %trim(rec.MFRREF) +
-          '","MFAPPR":"' + %trim(rec.MFAPPR) +
-          '","MFRTXT":"' + %trim(rec.MFRTXT) +
-          '","MFSTXT":"' + %trim(rec.MFSTXT) +
-          '","MFRAVS":"' + %trim(rec.MFRAVS) +
-          '","MFRCVV":"' + %trim(rec.MFRCVV) +
-          '","MFQACI":"' + %trim(rec.MFQACI) +
-          '","MFRACI":"' + %trim(rec.MFRACI) +
-          '","MFSTRN":"' + %trim(rec.MFSTRN) +
-          '","MFATHC":"' + %trim(rec.MFATHC) +
-          '","MFTRNS":"' + %trim(rec.MFTRNS) +
-          '","MFRTVR":"' + %trim(rec.MFRTVR) +
-          '","MFMKDI":"' + %trim(rec.MFMKDI) +
-          '","MFTRID":"' + %trim(rec.MFTRID) +
-          '","MFVALC":"' + %trim(rec.MFVALC) +
-          '","MFACQB":"' + %trim(rec.MFACQB) +
-          '","MFHMID":"' + %trim(rec.MFHMID) +
-          '","MFSTAN":"' + %trim(rec.MFSTAN) +
-          '","MFNWID":"' + %trim(rec.MFNWID) +
-          '","MFSTLD":"' + %trim(rec.MFSTLD) +
-          '","MFGRP3":"' + %trim(rec.MFGRP3) +
-          '","MFDATA":"' + %trim(rec.MFDATA) + '"}');
+    // JSON row in chunks (avoids statement-length / delimiter issues)
+    buf = CRLF + '  {"MFUKEY":"' + %trim(MFUKEY) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFDATE":"' + %trim(MFDATE) + '","MFTIME":"' + %trim(MFTIME) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFPRCD":"' + %trim(MFPRCD) + '","MFPRCT":"' + %trim(MFPRCT) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFSETD":"' + %trim(MFSETD) + '","MFSHPD":"' + %trim(MFSHPD) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFSETT":"' + %trim(MFSETT) + '","MFSTUS":"' + %trim(MFSTUS) + '","MFCUST":"' + %trim(MFCUST) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFMRCH":"' + %trim(MFMRCH) + '","MFACNL":"' + %trim(MFACNL) + '","MFSCNL":"' + %trim(MFSCNL) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFTYPE":"' + %trim(MFTYPE) + '","MFTYP2":"' + %trim(MFTYP2) + '","MFRTRN":"' + %trim(MFRTRN) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MF$RAQ":"' + %trim(MF$RAQ) + '","MF$RAG":"' + %trim(MF$RAG) + '","MF$RAD":"' + %trim(MF$RAD) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MF$FTS":"' + %trim(MF$FTS) + '","MF$SLQ":"' + %trim(MF$SLQ) + '","MF$SLG":"' + %trim(MF$SLG) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MF$SLD":"' + %trim(MF$SLD) + '","MF$FCQ":"' + %trim(MF$FCQ) + '","MF$FCG":"' + %trim(MF$FCG) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MF$FCD":"' + %trim(MF$FCD) + '","MF$RSD":"' + %trim(MF$RSD) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MF$TRP":"' + %trim(MF$TRP) + '","MF$TRR":"' + %trim(MF$TRR) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MF$RVQ":"' + %trim(MF$RVQ) + '","MF$RVG":"' + %trim(MF$RVG) + '","MF$RVD":"' + %trim(MF$RVD) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MF$LVD":"' + %trim(MF$LVD) + '","MF$RED":"' + %trim(MF$RED) + '","MF$RER":"' + %trim(MF$RER) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MF$IED":"' + %trim(MF$IED) + '","MF$IER":"' + %trim(MF$IER) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFRLIB":"' + %trim(MFRLIB) + '","MFRQUE":"' + %trim(MFRQUE) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFRLOC":"' + %trim(MFRLOC) + '","MFATAL":"' + %trim(MFATAL) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFVALU":' + %char(MFVALU) + ',"MFRVND":"' + %trim(MFRVND) + '","MFRVNA":"' + %trim(MFRVNA) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFRDAT":"' + %trim(MFRDAT) + '","MFRTIM":"' + %trim(MFRTIM) + '","MFUSER":"' + %trim(MFUSER) + '","MFSUSR":"' + %trim(MFSUSR) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFPROG":"' + %trim(MFPROG) + '","MFCURP":"' + %trim(MFCURP) + '","MFKEYP":"' + %trim(MFKEYP) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFKEYN":"' + %trim(MFKEYN) + '","MFIERR":"' + %trim(MFIERR) + '","MFXTRA":"' + %trim(MFXTRA) + '","MFPRIO":"' + %trim(MFPRIO) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFBATC":' + %char(MFBATC) + ',"MFSEQN":' + %char(MFSEQN) + ',"MFMETH":"' + %trim(MFMETH) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFREFR":"' + %trim(MFREFR) + '","MFORDR":"' + %trim(MFORDR) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFAMT1":' + %char(MFAMT1) + ',"MFAMT2":' + %char(MFAMT2) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFSETR":' + %char(MFSETR) + ',"MFSETA":' + %char(MFSETA) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFCARD":"' + %trim(MFCARD) + '","MFTRK1":"' + %trim(MFTRK1) + '","MFMICR":"' + %trim(MFMICR) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFEDAT":"' + %trim(MFEDAT) + '","MFCVV2":"' + %trim(MFCVV2) + '","MFPINC":"' + %trim(MFPINC) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFADD1":"' + %trim(MFADD1) + '","MFADD2":"' + %trim(MFADD2) + '","MFZIPC":"' + %trim(MFZIPC) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFCITY":"' + %trim(MFCITY) + '","MFSTAT":"' + %trim(MFSTAT) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFNAME":"' + %trim(MFNAME) + '","MFCURR":"' + %trim(MFCURR) + '","MFTERM":"' + %trim(MFTERM) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFSTID":"' + %trim(MFSTID) + '","MFREQN":"' + %trim(MFREQN) + '","MFNUMB":"' + %trim(MFNUMB) + '","MFRETR":"' + %trim(MFRETR) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFLTXF":"' + %trim(MFLTXF) + '","MFDSTZ":"' + %trim(MFDSTZ) + '","MFTRAN":"' + %trim(MFTRAN) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFCHKA":"' + %trim(MFCHKA) + '","MFCHEK":"' + %trim(MFCHEK) + '","MFCHKT":"' + %trim(MFCHKT) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFBDAT":"' + %trim(MFBDAT) + '","MFIDEN":"' + %trim(MFIDEN) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFUSD1":"' + %trim(MFUSD1) + '","MFUSD2":"' + %trim(MFUSD2) + '","MFUSD3":"' + %trim(MFUSD3) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFUSD4":"' + %trim(MFUSD4) + '","MFUSD5":"' + %trim(MFUSD5) + '","MFUSD6":"' + %trim(MFUSD6) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFUSD7":"' + %trim(MFUSD7) + '","MFUSD8":"' + %trim(MFUSD8) + '","MFUSD9":"' + %trim(MFUSD9) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFUSDA":' + %char(MFUSDA) + ',"MFUSDB":' + %char(MFUSDB) + ',"MFUSDC":' + %char(MFUSDC) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFRREF":"' + %trim(MFRREF) + '","MFAPPR":"' + %trim(MFAPPR) + '","MFRTXT":"' + %trim(MFRTXT) + '","MFSTXT":"' + %trim(MFSTXT) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFRAVS":"' + %trim(MFRAVS) + '","MFRCVV":"' + %trim(MFRCVV) + '","MFQACI":"' + %trim(MFQACI) + '","MFRACI":"' + %trim(MFRACI) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFSTRN":"' + %trim(MFSTRN) + '","MFATHC":"' + %trim(MFATHC) + '","MFTRNS":"' + %trim(MFTRNS) + '","MFRTVR":"' + %trim(MFRTVR) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFMKDI":"' + %trim(MFMKDI) + '","MFTRID":"' + %trim(MFTRID) + '","MFVALC":"' + %trim(MFVALC) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFACQB":"' + %trim(MFACQB) + '","MFHMID":"' + %trim(MFHMID) + '","MFSTAN":"' + %trim(MFSTAN) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFNWID":"' + %trim(MFNWID) + '","MFSTLD":"' + %trim(MFSTLD) + '"';
+    bufLen = %len(%trimr(buf));
+    QtmhWrStout(%addr(buf) : bufLen : apiErrData);
+    buf = ',"MFGRP3":"' + %trim(MFGRP3) + '","MFDATA":"' + %trim(MFDATA) + '"}';
     bufLen = %len(%trimr(buf));
     QtmhWrStout(%addr(buf) : bufLen : apiErrData);
 
-    read(e) c3fp3020 rec;
+    read(e) c3fp3020;
   enddo;
 
   // 4. JSON closing
