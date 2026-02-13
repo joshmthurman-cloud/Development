@@ -1,0 +1,15 @@
+***********************************************************************
+* DDS for MF data file - used by web server RPG program
+* File: MFDATA  Library: (your library)
+* Compile: CRTPF from this source
+***********************************************************************
+A          R MFDATAR
+A            MFUKEY        15A          COLHDG('Key')
+A            MFDATE         8S 0        COLHDG('Date')
+A            MFTIME         6S 0        COLHDG('Time')
+A            MFCUST         5A          COLHDG('Customer')
+A            MFMRCH         5A          COLHDG('Merchant')
+A            MFTYPE         2A          COLHDG('Type')
+A            MFTYP2         2A          COLHDG('Type 2')
+A            MFRTRN         2A          COLHDG('Return')
+A          K MFUKEY

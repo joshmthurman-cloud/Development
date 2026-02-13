@@ -1,0 +1,46 @@
+================================================================================
+MFDATA_CGI - COPY-PASTE COMMANDS (run in this order)
+================================================================================
+
+--- ON YOUR PC (PowerShell in the POC folder) ---
+Regenerate the fixed-format source file (do this after any change to MFDATA_CGI.rpgle):
+
+Set-Location "c:\Development\C3Tools\poc"; python to_fixed_src.py MFDATA_CGI.rpgle MFDATA_CGI_fixed.rpgle
+
+
+--- FILEZILLA ---
+1. Connect to the 400.
+2. Remote side: go to folder /home/JOSH/
+3. Transfer type: Binary (not Auto/ASCII).
+4. Local side: open c:\Development\C3Tools\poc
+5. Upload file: MFDATA_CGI_fixed.rpgle  (to /home/JOSH/)
+
+
+--- ON THE 400 (green screen or ACS Run Command) ---
+Copy stream file into source member (one line, run as-is):
+
+CPYFRMSTMF FROMSTMF('/home/JOSH/MFDATA_CGI_fixed.rpgle') TOMBR('/QSYS.LIB/JOSH.LIB/QSRC.FILE/MFDATA_CGI.MBR') MBROPT(*REPLACE) STMFCCSID(37)
+
+
+Compile the RPG module (ensure JOSH is in your library list):
+
+CRTRPGMOD MODULE(josh/MFDATA_CGI) SRCFILE(josh/QSRC) SRCMBR(MFDATA_CGI)
+
+
+Create the program (bind CGI service program):
+
+CRTPGM PGM(josh/MFDATA_CGI) MODULE(josh/MFDATA_CGI) BNDSRVPGM(QHTTPSVR/QZHBCGI)
+
+
+--- OPTIONAL: Compile with listing to spool (to see errors) ---
+
+CRTRPGMOD MODULE(josh/MFDATA_CGI) SRCFILE(josh/QSRC) SRCMBR(MFDATA_CGI) OUTPUT(*PRINT)
+
+
+--- ONE-TIME: Create source file QSRC in JOSH (if it doesn't exist) ---
+
+CRTLIB LIB(josh)
+CRTSRCPF FILE(josh/QSRC) RCDLEN(112)
+
+
+================================================================================

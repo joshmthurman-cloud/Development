@@ -1,0 +1,49 @@
+**FREE
+//----------------------------------------------------------------------
+// JsonEscape - Escape string for JSON (backslash, quote, CR, LF, tab)
+// Include this at end of TXNLOOKUP.rpgle after main procedure.
+//----------------------------------------------------------------------
+Dcl-Proc JsonEscape Export;
+  Dcl-Pi *n;
+    inStr  Char(1000) Const;
+    inLen  Int(10) Const;
+    outStr Char(2000);
+    outLen Int(10);
+  End-Pi;
+  Dcl-S i Int(10);
+  Dcl-S c Char(1);
+  Dcl-S outPos Int(10) Inz(0);
+
+  outLen = 0;
+  Clear outStr;
+  For i = 1 to inLen;
+    c = %Subst(inStr : i : 1);
+    Select;
+      When c = '\';
+        outPos += 1;
+        %Subst(outStr : outPos : 2) = '\\';
+        outPos += 1;
+      When c = '"';
+        outPos += 1;
+        %Subst(outStr : outPos : 2) = '\"';
+        outPos += 1;
+      When c = x'0A';
+        outPos += 1;
+        %Subst(outStr : outPos : 2) = '\n';
+        outPos += 1;
+      When c = x'0D';
+        outPos += 1;
+        %Subst(outStr : outPos : 2) = '\r';
+        outPos += 1;
+      When c = x'09';
+        outPos += 1;
+        %Subst(outStr : outPos : 2) = '\t';
+        outPos += 1;
+      Other;
+        outPos += 1;
+        %Subst(outStr : outPos : 1) = c;
+    EndSl;
+  EndFor;
+  outLen = outPos;
+  Return;
+End-Proc JsonEscape;
