@@ -35,13 +35,34 @@ export async function PATCH(
   const body = await req.json();
   const { name, repColorHex } = body;
 
+  const repId = (await params).id;
+  if (repColorHex != null) {
+    const existing = await prisma.rep.findUnique({
+      where: { id: repId },
+      include: { group: { include: { reps: { where: { id: { not: repId } }, select: { repColorHex: true } } } } },
+    });
+    if (existing?.group) {
+      const usedByOthers = new Set(
+        existing.group.reps.map((r) => (r.repColorHex ?? "").replace(/^#/, "").toUpperCase())
+      );
+      const groupNorm = existing.group.colorHex?.replace(/^#/, "").toUpperCase();
+      const newNorm = String(repColorHex).replace(/^#/, "").toUpperCase();
+      if (usedByOthers.has(newNorm) || groupNorm === newNorm) {
+        return NextResponse.json(
+          { error: "Another rep in this group already uses that color (or the group color). Pick a different color." },
+          { status: 400 }
+        );
+      }
+    }
+  }
+
   const rep = await prisma.rep.update({
-    where: { id: (await params).id },
+    where: { id: repId },
     data: {
       ...(name != null && { name }),
       ...(repColorHex != null && { repColorHex }),
     },
-    include: { territories: true },
+    include: { group: true, territories: true },
   });
 
   return NextResponse.json(rep);

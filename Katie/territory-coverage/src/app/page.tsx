@@ -175,11 +175,11 @@ export default function DashboardPage() {
                   name: rep.name,
                   colorHex: rep.repColorHex || g.colorHex,
                 });
-                overlapStates.add(stateAbbr);
+                // Same group: do not mark as overlap — state shows as one group color
               } else {
                 stateData.set(stateAbbr, {
                   stateAbbr,
-                  color: rep.repColorHex || g.colorHex,
+                  color: g.colorHex,
                   reps: [{ name: rep.name, colorHex: rep.repColorHex || g.colorHex }],
                 });
               }
@@ -195,12 +195,12 @@ export default function DashboardPage() {
                 const existing = stateMap.get(fips5);
                 const entry: TerritoryData = {
                   stateAbbr,
-                  color: rep.repColorHex || g.colorHex,
+                  color: g.colorHex,
                   reps: [{ name: rep.name, colorHex: rep.repColorHex || g.colorHex }],
                 };
                 if (existing) {
                   existing.reps!.push(entry.reps![0]);
-                  overlapCounties.add(key);
+                  // Same group: do not mark county as overlap
                 } else {
                   stateMap.set(fips5, entry);
                 }
