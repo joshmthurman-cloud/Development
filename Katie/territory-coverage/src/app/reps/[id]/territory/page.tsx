@@ -27,6 +27,7 @@ export default function RepTerritoryPage() {
   const [rep, setRep] = useState<Rep | null>(null);
   const [loading, setLoading] = useState(true);
   const [countyModalState, setCountyModalState] = useState<string | null>(null);
+  const [manageStateAbbr, setManageStateAbbr] = useState<string | null>(null);
   const [addStateOpen, setAddStateOpen] = useState(false);
   const [addStateAbbr, setAddStateAbbr] = useState("");
   const [addWholeState, setAddWholeState] = useState(true);
@@ -137,7 +138,7 @@ export default function RepTerritoryPage() {
     }
   };
 
-  const handleConvertToCountiesOnly = async (stateAbbr: string) => {
+  const handleRemoveState = async (stateAbbr: string) => {
     setSaving(true);
     try {
       await fetch(`/api/reps/${repId}/territory`, {
@@ -149,11 +150,16 @@ export default function RepTerritoryPage() {
           countyFipsList: [],
         }),
       });
+      setManageStateAbbr(null);
       loadRep();
-      setCountyModalState(stateAbbr);
     } finally {
       setSaving(false);
     }
+  };
+
+  const openCountyEditor = (stateAbbr: string) => {
+    setManageStateAbbr(null);
+    setCountyModalState(stateAbbr);
   };
 
   if (loading || !rep) {
@@ -287,32 +293,13 @@ export default function RepTerritoryPage() {
                     {s.countyFips.length} counties
                   </div>
                 )}
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {!s.hasState && (
-                    <button
-                      onClick={() => setCountyModalState(s.stateAbbr)}
-                      className="text-xs text-blue-600 hover:underline"
-                    >
-                      Edit Counties
-                    </button>
-                  )}
-                  {s.hasState ? (
-                    <button
-                      onClick={() => handleConvertToCountiesOnly(s.stateAbbr)}
-                      disabled={saving}
-                      className="text-xs text-blue-600 hover:underline disabled:opacity-50"
-                    >
-                      Convert to Counties Only
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => handleConvertToWholeState(s.stateAbbr)}
-                      disabled={saving}
-                      className="text-xs text-blue-600 hover:underline disabled:opacity-50"
-                    >
-                      Convert to Whole State
-                    </button>
-                  )}
+                <div className="mt-2">
+                  <button
+                    onClick={() => setManageStateAbbr(s.stateAbbr)}
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    Manage State
+                  </button>
                 </div>
               </div>
             ))}
@@ -337,6 +324,77 @@ export default function RepTerritoryPage() {
           onClose={() => setCountyModalState(null)}
         />
       )}
+
+      {manageStateAbbr && (() => {
+        const s = stateTerritories.find((x) => x.stateAbbr === manageStateAbbr);
+        if (!s) return null;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-white rounded-xl shadow-xl max-w-sm w-full mx-4 p-4">
+              <h3 className="text-lg font-medium text-slate-800 mb-3">
+                Manage State: {manageStateAbbr}
+              </h3>
+              <div className="space-y-2">
+                {s.hasState ? (
+                  <button
+                    onClick={() => openCountyEditor(manageStateAbbr)}
+                    className="block w-full text-left text-sm px-3 py-2 text-blue-600 hover:bg-slate-100 rounded"
+                  >
+                    Switch to counties only
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={async () => {
+                        setSaving(true);
+                        try {
+                          await fetch(`/api/reps/${repId}/territory`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              stateAbbr: manageStateAbbr,
+                              wholeState: true,
+                            }),
+                          });
+                          setManageStateAbbr(null);
+                          loadRep();
+                        } finally {
+                          setSaving(false);
+                        }
+                      }}
+                      disabled={saving}
+                      className="block w-full text-left text-sm px-3 py-2 text-blue-600 hover:bg-slate-100 rounded disabled:opacity-50"
+                    >
+                      Switch to whole state
+                    </button>
+                    <button
+                      onClick={() => openCountyEditor(manageStateAbbr)}
+                      className="block w-full text-left text-sm px-3 py-2 text-blue-600 hover:bg-slate-100 rounded"
+                    >
+                      Edit counties
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={() => handleRemoveState(manageStateAbbr)}
+                  disabled={saving}
+                  className="block w-full text-left text-sm px-3 py-2 text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
+                >
+                  Remove state
+                </button>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-200">
+                <button
+                  onClick={() => setManageStateAbbr(null)}
+                  className="text-sm text-slate-600 hover:text-slate-800"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

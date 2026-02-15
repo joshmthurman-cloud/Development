@@ -86,8 +86,8 @@ export default function DashboardPage() {
         for (const rep of g.reps) {
           const coverage = getRepStateCoverage(rep.territories);
           for (const [stateAbbr, { hasState, countyFips }] of coverage) {
-            const showState = hasState || (useExplicitOnly ? false : countyFips.length > 0);
-            const showCountiesOnly = useExplicitOnly && !hasState && countyFips.length > 0;
+            const showState = hasState;
+            const showCountiesOnly = !hasState && countyFips.length > 0;
             if (showState) {
               const existing = stateData.get(stateAbbr);
               if (existing) {

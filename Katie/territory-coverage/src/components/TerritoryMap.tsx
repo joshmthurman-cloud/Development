@@ -105,10 +105,10 @@ function transformGeometry(
   };
 }
 
-// Alaska: scale down, place below California. Hawaii: scale slightly, place below CA.
+// Alaska: scale down, place west of California. Hawaii: scale slightly, place below CA.
 const AK_CENTER = [-153.5, 64];
 const HI_CENTER = [-155.5, 19.5];
-const INSET_TARGET_AK = [-120, 32];
+const INSET_TARGET_AK = [-128, 32];
 const INSET_TARGET_HI = [-117, 27];
 
 function bboxFromGeometry(geom: GeoJSON.Polygon | GeoJSON.MultiPolygon): [number, number, number, number] {
@@ -127,6 +127,26 @@ function bboxFromGeometry(geom: GeoJSON.Polygon | GeoJSON.MultiPolygon): [number
     for (const poly of geom.coordinates) for (const ring of poly) visit(ring);
   }
   return [minLng, minLat, maxLng, maxLat];
+}
+
+function bboxFromFeature(f: GeoJSON.Feature): [number, number, number, number] | null {
+  const geom = f.geometry;
+  if (!geom || geom.type === "Point") return null;
+  return bboxFromGeometry(geom as GeoJSON.Polygon | GeoJSON.MultiPolygon);
+}
+
+function unionBbox(
+  a: [number, number, number, number] | null,
+  b: [number, number, number, number] | null
+): [number, number, number, number] | null {
+  if (!a) return b;
+  if (!b) return a;
+  return [
+    Math.min(a[0], b[0]),
+    Math.min(a[1], b[1]),
+    Math.max(a[2], b[2]),
+    Math.max(a[3], b[3]),
+  ];
 }
 
 export function TerritoryMap({
@@ -357,6 +377,22 @@ export function TerritoryMap({
         ["counties-fill", "counties-overlap", "counties-outline"].forEach((id) => {
           if (map.getLayer(id)) map.removeLayer(id);
         });
+      }
+
+      // Zoom to highlighted territory at ~80% of view (10% padding on each side)
+      let bounds: [number, number, number, number] | null = null;
+      for (const stateAbbr of stateData.keys()) {
+        const b = stateBboxesRef.current.get(stateAbbr);
+        if (b) bounds = unionBbox(bounds, b);
+      }
+      for (const f of countyFeatures) {
+        const b = bboxFromFeature(f);
+        if (b) bounds = unionBbox(bounds, b);
+      }
+      if (bounds && containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const pad = Math.min(rect.width, rect.height) * 0.1;
+        map.fitBounds(bounds, { padding: pad, duration: 500, maxZoom: 10 });
       }
     };
 
