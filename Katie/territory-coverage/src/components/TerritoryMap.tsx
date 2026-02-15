@@ -41,21 +41,35 @@ function hexToRgb(hex: string): [number, number, number] {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
+/** Barber-pole overlap pattern: diagonal semi-transparent stripes over transparent gaps so base fill shows through. */
 function createOverlapPattern(colors: string[]): { width: number; height: number; data: Uint8Array } {
-  const size = 32;
+  const size = 128;
+  const stripeWidth = 10;
+  const gapWidth = 2;
+  const period = stripeWidth + gapWidth;
+  const stripeAlpha = 180;
   const data = new Uint8Array(size * size * 4);
-  const stripeWidth = 4;
-  const rgb = colors.slice(0, 2).map(hexToRgb);
-  if (rgb.length === 1) rgb.push([200, 200, 200]);
+  const stripeColors = colors.length > 1 ? colors.slice(1) : colors;
+  const rgb = stripeColors.map(hexToRgb);
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const i = (y * size + x) * 4;
-      const stripeIndex = Math.floor((x + y) / stripeWidth) % 2;
-      const [r, g, b] = rgb[stripeIndex];
-      data[i] = r;
-      data[i + 1] = g;
-      data[i + 2] = b;
-      data[i + 3] = 255;
+      const diag = x + y;
+      const pixelInPeriod = diag % period;
+      if (pixelInPeriod < stripeWidth) {
+        const band = Math.floor(diag / period);
+        const colorIndex = band % rgb.length;
+        const [r, g, b] = rgb[colorIndex];
+        data[i] = r;
+        data[i + 1] = g;
+        data[i + 2] = b;
+        data[i + 3] = stripeAlpha;
+      } else {
+        data[i] = 0;
+        data[i + 1] = 0;
+        data[i + 2] = 0;
+        data[i + 3] = 0;
+      }
     }
   }
   return { width: size, height: size, data };
@@ -303,13 +317,15 @@ export function TerritoryMap({
           overlapPatternsToAdd.push({ id: overlapPatternId(overlapColors), colors: overlapColors });
         }
         if (stateAbbr) stateBboxesRef.current.set(stateAbbr, bboxFromGeometry(geometry));
+        const baseColor =
+          overlap && overlapColors.length > 0 ? overlapColors[0] : (data?.color ?? "#e2e8f0");
         return {
           ...f,
           geometry,
           properties: {
             ...(f.properties || {}),
             stateAbbr: stateAbbr || "",
-            fillColor: data?.color ?? "#e2e8f0",
+            fillColor: baseColor,
             overlap,
             ...(overlap && overlapColors.length > 0 ? { overlapPatternId: overlapPatternId(overlapColors) } : {}),
           },
@@ -332,10 +348,9 @@ export function TerritoryMap({
       for (const { id, colors } of overlapPatternsToAdd) {
         if (!addedPatternIds.has(id)) {
           addedPatternIds.add(id);
-          if (!map.hasImage(id)) {
-            const pattern = createOverlapPattern(colors);
-            map.addImage(id, pattern, { pixelRatio: 2 });
-          }
+          if (map.hasImage(id)) map.removeImage(id);
+          const pattern = createOverlapPattern(colors);
+          map.addImage(id, pattern, { pixelRatio: 2 });
         }
       }
 
@@ -363,7 +378,7 @@ export function TerritoryMap({
         filter: ["==", ["get", "overlap"], true],
         paint: {
           "fill-pattern": ["coalesce", ["get", "overlapPatternId"], "zebra-hatch"],
-          "fill-opacity": 0.9,
+          "fill-opacity": 0.75,
         },
       });
 
@@ -420,13 +435,15 @@ export function TerritoryMap({
                 if (overlap && overlapColors.length > 0) {
                   overlapPatternsToAdd.push({ id: overlapPatternId(overlapColors), colors: overlapColors });
                 }
+                const countyBaseColor =
+                  overlap && overlapColors.length > 0 ? overlapColors[0] : data.color;
                 countyFeatures.push({
                   ...f,
                   properties: {
                     ...(f.properties || {}),
                     stateAbbr,
                     countyFips: fips5,
-                    fillColor: data.color,
+                    fillColor: countyBaseColor,
                     overlap,
                     ...(overlap && overlapColors.length > 0 ? { overlapPatternId: overlapPatternId(overlapColors) } : {}),
                   },
@@ -440,9 +457,8 @@ export function TerritoryMap({
       }
 
       for (const { id, colors } of overlapPatternsToAdd) {
-        if (!map.hasImage(id)) {
-          map.addImage(id, createOverlapPattern(colors), { pixelRatio: 2 });
-        }
+        if (map.hasImage(id)) map.removeImage(id);
+        map.addImage(id, createOverlapPattern(colors), { pixelRatio: 2 });
       }
 
       const countySourceData = { type: "FeatureCollection" as const, features: countyFeatures };
@@ -471,7 +487,7 @@ export function TerritoryMap({
             filter: ["==", ["get", "overlap"], true],
             paint: {
               "fill-pattern": ["coalesce", ["get", "overlapPatternId"], "zebra-hatch"],
-              "fill-opacity": 0.9,
+              "fill-opacity": 0.75,
             },
           },
           "states-outline"
