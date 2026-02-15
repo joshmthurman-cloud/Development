@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "start:server": "next start -H 0.0.0.0 -p 8094",
     "lint": "next lint",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
