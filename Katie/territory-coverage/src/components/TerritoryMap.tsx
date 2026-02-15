@@ -267,7 +267,8 @@ export function TerritoryMap({
 
       if (clickHandlerRef.current) map.off("click", clickHandlerRef.current);
       clickHandlerRef.current = (e: maplibregl.MapMouseEvent) => {
-        const countyFeats = map.queryRenderedFeatures(e.point, { layers: ["counties-fill"] });
+        const hasCounties = !!map.getLayer("counties-fill");
+        const countyFeats = hasCounties ? map.queryRenderedFeatures(e.point, { layers: ["counties-fill"] }) : [];
         const stateFeats = map.queryRenderedFeatures(e.point, { layers: ["states-fill"] });
         const feats = countyFeats.length > 0 ? countyFeats : stateFeats;
         if (feats.length > 0) {
