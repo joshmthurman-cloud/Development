@@ -23,16 +23,6 @@ interface Rep {
   territories: { stateAbbr: string; level: string; countyFips: string }[];
 }
 
-/** Stable deterministic rep color from groupId+repId when repColorHex is null. HSL hue hash, legible S/L. */
-function getRepColor(rep: Rep, group: Group): string {
-  if (rep.repColorHex) return rep.repColorHex;
-  let h = 0;
-  const s = group.id + rep.id;
-  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
-  const hue = ((h >>> 0) % 360 + 360) % 360;
-  return `hsl(${hue}, 65%, 45%)`;
-}
-
 export default function DashboardPage() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
@@ -66,12 +56,12 @@ export default function DashboardPage() {
     [groups, selectedGroupIds]
   );
 
-  const { stateData, countyData, overlapStates, overlapCounties, mode, legendGroups } = useMemo(() => {
+  const { stateData, countyData, overlapStates, overlapCounties, mode, legendItems } = useMemo(() => {
     const stateData = new Map<string, TerritoryData>();
-    const countyData = new Map<string, Map<string, TerritoryData>>();
+    const countyData = new Map<string, Map<string, TerritoryData>>(); // stateAbbr -> countyFips -> data
     const overlapStates = new Set<string>();
-    const overlapCounties = new Set<string>();
-    const legendGroups: { name: string; colorHex: string; reps: { name: string; colorHex: string }[] }[] = [];
+    const overlapCounties = new Set<string>(); // "stateAbbr:countyFips"
+    let legendItems: { name: string; color: string }[] = [];
     let mode: MapMode = "group";
 
     const getRepStateCoverage = (territories: { stateAbbr: string; level: string; countyFips: string }[]) => {
@@ -92,14 +82,9 @@ export default function DashboardPage() {
     if (selectedGroupIds.size === 0 || selectedGroupIds.size > 1) {
       mode = "group";
       for (const g of selectedGroups) {
-        legendGroups.push({
-          name: g.name,
-          colorHex: g.colorHex,
-          reps: g.reps.map((r) => ({ name: r.name, colorHex: getRepColor(r, g) })),
-        });
+        legendItems.push({ name: g.name, color: g.colorHex });
         const useExplicitOnly = !g.servicesWholeState;
         for (const rep of g.reps) {
-          const repColor = getRepColor(rep, g);
           const coverage = getRepStateCoverage(rep.territories);
           for (const [stateAbbr, { hasState, countyFips }] of coverage) {
             const showState = hasState;
@@ -112,18 +97,26 @@ export default function DashboardPage() {
                   existing.groups!.push({
                     name: g.name,
                     colorHex: g.colorHex,
-                    reps: [{ name: rep.name, colorHex: repColor }],
+                    reps: [{ name: rep.name, colorHex: rep.repColorHex || g.colorHex }],
                   });
                   overlapStates.add(stateAbbr);
                 } else {
-                  existing.groups![idx].reps.push({ name: rep.name, colorHex: repColor });
+                  existing.groups![idx].reps.push({
+                    name: rep.name,
+                    colorHex: rep.repColorHex || g.colorHex,
+                  });
+                  overlapStates.add(stateAbbr);
                 }
               } else {
                 stateData.set(stateAbbr, {
                   stateAbbr,
                   color: g.colorHex,
                   groups: [
-                    { name: g.name, colorHex: g.colorHex, reps: [{ name: rep.name, colorHex: repColor }] },
+                    {
+                      name: g.name,
+                      colorHex: g.colorHex,
+                      reps: [{ name: rep.name, colorHex: rep.repColorHex || g.colorHex }],
+                    },
                   ],
                 });
               }
@@ -141,7 +134,11 @@ export default function DashboardPage() {
                 const entry: TerritoryData = {
                   stateAbbr,
                   color: g.colorHex,
-                  groups: [{ name: g.name, colorHex: g.colorHex, reps: [{ name: rep.name, colorHex: repColor }] }],
+                  groups: [{
+                    name: g.name,
+                    colorHex: g.colorHex,
+                    reps: [{ name: rep.name, colorHex: rep.repColorHex || g.colorHex }],
+                  }],
                 };
                 if (existing) {
                   const idx = existing.groups!.findIndex((x) => x.name === g.name);
@@ -150,6 +147,7 @@ export default function DashboardPage() {
                     overlapCounties.add(key);
                   } else {
                     existing.groups![idx].reps.push(entry.groups![0].reps[0]);
+                    overlapCounties.add(key);
                   }
                 } else {
                   stateMap.set(fips5, entry);
@@ -163,25 +161,26 @@ export default function DashboardPage() {
       mode = "rep";
       const g = selectedGroups[0];
       if (g) {
-        legendGroups.push({
-          name: g.name,
-          colorHex: g.colorHex,
-          reps: g.reps.map((r) => ({ name: r.name, colorHex: getRepColor(r, g) })),
-        });
         for (const rep of g.reps) {
-          const repColor = getRepColor(rep, g);
+          legendItems.push({
+            name: rep.name,
+            color: rep.repColorHex || g.colorHex,
+          });
           const coverage = getRepStateCoverage(rep.territories);
           for (const [stateAbbr, { hasState, countyFips }] of coverage) {
             if (hasState) {
               const existing = stateData.get(stateAbbr);
               if (existing) {
-                existing.reps!.push({ name: rep.name, colorHex: repColor });
+                existing.reps!.push({
+                  name: rep.name,
+                  colorHex: rep.repColorHex || g.colorHex,
+                });
                 overlapStates.add(stateAbbr);
               } else {
                 stateData.set(stateAbbr, {
                   stateAbbr,
-                  color: repColor,
-                  reps: [{ name: rep.name, colorHex: repColor }],
+                  color: rep.repColorHex || g.colorHex,
+                  reps: [{ name: rep.name, colorHex: rep.repColorHex || g.colorHex }],
                 });
               }
             } else if (countyFips.length > 0) {
@@ -196,8 +195,8 @@ export default function DashboardPage() {
                 const existing = stateMap.get(fips5);
                 const entry: TerritoryData = {
                   stateAbbr,
-                  color: repColor,
-                  reps: [{ name: rep.name, colorHex: repColor }],
+                  color: rep.repColorHex || g.colorHex,
+                  reps: [{ name: rep.name, colorHex: rep.repColorHex || g.colorHex }],
                 };
                 if (existing) {
                   existing.reps!.push(entry.reps![0]);
@@ -218,7 +217,7 @@ export default function DashboardPage() {
       overlapStates,
       overlapCounties,
       mode: mode as MapMode,
-      legendGroups,
+      legendItems,
     };
   }, [selectedGroups, selectedGroupIds]);
 
@@ -325,30 +324,20 @@ export default function DashboardPage() {
               ) : (
                 <div className="space-y-2">
                   {groups.map((g) => (
-                    <div key={g.id}>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <Checkbox
-                          checked={selectedGroupIds.has(g.id)}
-                          onCheckedChange={() => handleToggleGroup(g.id)}
-                        />
-                        <span
-                          className="w-3 h-3 rounded-sm shrink-0"
-                          style={{ backgroundColor: g.colorHex }}
-                        />
-                        <span className="text-sm text-slate-700 font-medium">{g.name}</span>
-                      </label>
-                      <ul className="ml-5 mt-0.5 space-y-0.5">
-                        {g.reps.map((r) => (
-                          <li key={r.id} className="flex items-center gap-1.5 text-xs text-slate-600">
-                            <span
-                              className="w-2 h-2 rounded-full shrink-0"
-                              style={{ backgroundColor: getRepColor(r, g) }}
-                            />
-                            {r.name}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                    <label
+                      key={g.id}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <Checkbox
+                        checked={selectedGroupIds.has(g.id)}
+                        onCheckedChange={() => handleToggleGroup(g.id)}
+                      />
+                      <span
+                        className="w-3 h-3 rounded-sm shrink-0"
+                        style={{ backgroundColor: g.colorHex }}
+                      />
+                      <span className="text-sm text-slate-700">{g.name}</span>
+                    </label>
                   ))}
                 </div>
               )}
@@ -418,6 +407,16 @@ export default function DashboardPage() {
                             + {selectedStateData.countyCount} county-level coverage
                           </p>
                         )}
+                        {(selectedStateData.aggregatedGroups.length > 4 ||
+                          selectedStateData.aggregatedReps.length > 4) && (
+                          <p className="text-slate-500 text-xs">
+                            Map shows first 2 colors; +
+                            {selectedStateData.aggregatedGroups.length > 0
+                              ? selectedStateData.aggregatedGroups.length - 2
+                              : selectedStateData.aggregatedReps.length - 2}{" "}
+                            more
+                          </p>
+                        )}
                       </div>
                     ) : (
                       <p className="text-slate-500 text-sm">No coverage in this state</p>
@@ -425,26 +424,26 @@ export default function DashboardPage() {
                   </div>
                 )}
               </div>
-              {legendGroups.length > 0 && (
-                <div className="mt-2 space-y-1.5">
-                  {legendGroups.map((grp) => (
-                    <div key={grp.name} className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
+              {legendItems.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-3">
+                  {legendItems.map((item) => (
+                    <div
+                      key={item.name}
+                      className="flex items-center gap-1.5 text-sm"
+                    >
                       <span
                         className="w-4 h-4 rounded shrink-0"
-                        style={{ backgroundColor: grp.colorHex }}
+                        style={{ backgroundColor: item.color }}
                       />
-                      <span className="text-sm font-medium text-slate-700">{grp.name}</span>
-                      {grp.reps.map((r) => (
-                        <span key={r.name} className="flex items-center gap-1 text-xs text-slate-600">
-                          <span
-                            className="w-2 h-2 rounded-full shrink-0"
-                            style={{ backgroundColor: r.colorHex }}
-                          />
-                          {r.name}
-                        </span>
-                      ))}
+                      <span className="text-slate-600">{item.name}</span>
                     </div>
                   ))}
+                  {(overlapStates.size > 0 || overlapCounties.size > 0) && (
+                    <div className="flex items-center gap-1.5 text-sm text-slate-500">
+                      <span className="w-4 h-4 rounded shrink-0 bg-[repeating-linear-gradient(-45deg,transparent,transparent_2px,#94a3b8_2px,#94a3b8_4px)]" />
+                      <span>Overlap</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

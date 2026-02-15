@@ -36,6 +36,78 @@ interface TerritoryMapProps {
   onStateClick?: (stateAbbr: string, data: TerritoryData | null) => void;
 }
 
+function hexToRgb(hex: string): [number, number, number] {
+  const n = parseInt(hex.replace(/^#/, ""), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+const TILE_SIZE = 256;
+const PERIOD = 32;
+const STRIPE_WIDTH = 20;
+const GAP_WIDTH = 12;
+const STRIPE_ALPHA = 160;
+
+/** Stable hash for overlap pattern id so we can remove/replace when colors change. */
+function overlapPatternId(colors: string[]): string {
+  const key = [...colors].sort().map((c) => c.replace(/^#/, "")).join("");
+  let h = 5381;
+  for (let i = 0; i < key.length; i++) h = ((h << 5) + h) ^ key.charCodeAt(i);
+  return "overlap-" + (h >>> 0).toString(36);
+}
+
+/**
+ * Seamless barber-pole overlap pattern. Tile 256x256, period divides tile (no seams).
+ * One diagonal: band = (x - y) % period, inStripe = band < stripeWidth.
+ * If >4 colors: two-color only (base + one stripe). Otherwise cycle colors[1..] over base colors[0].
+ */
+function createOverlapPattern(colors: string[]): { width: number; height: number; data: Uint8Array } {
+  const data = new Uint8Array(TILE_SIZE * TILE_SIZE * 4);
+  const stripeColors =
+    colors.length > 4
+      ? [colors[1]]
+      : colors.length > 1
+        ? colors.slice(1)
+        : [colors[0]];
+  const rgb = stripeColors.map(hexToRgb);
+  for (let y = 0; y < TILE_SIZE; y++) {
+    for (let x = 0; x < TILE_SIZE; x++) {
+      const i = (y * TILE_SIZE + x) * 4;
+      const band = ((x - y) % PERIOD + PERIOD) % PERIOD;
+      const inStripe = band < STRIPE_WIDTH;
+      if (inStripe) {
+        const colorIndex = Math.floor((x - y + TILE_SIZE) / PERIOD) % rgb.length;
+        const [r, g, b] = rgb[colorIndex];
+        data[i] = r;
+        data[i + 1] = g;
+        data[i + 2] = b;
+        data[i + 3] = STRIPE_ALPHA;
+      } else {
+        data[i] = 0;
+        data[i + 1] = 0;
+        data[i + 2] = 0;
+        data[i + 3] = 0;
+      }
+    }
+  }
+  return { width: TILE_SIZE, height: TILE_SIZE, data };
+}
+
+function createZebraPattern(): { width: number; height: number; data: Uint8Array } {
+  const size = 16;
+  const data = new Uint8Array(size * size * 4);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const i = (y * size + x) * 4;
+      const stripe = (x + y) % 2 === 0 ? 0 : 255;
+      data[i] = stripe;
+      data[i + 1] = stripe;
+      data[i + 2] = stripe;
+      data[i + 3] = 180;
+    }
+  }
+  return { width: size, height: size, data };
+}
+
 function getStateAbbrFromFeature(feature: GeoJSON.Feature): string | null {
   const id = feature.id ?? feature.properties?.id;
   if (typeof id === "string") {
@@ -217,11 +289,10 @@ export function TerritoryMap({
     const map = mapRef.current;
     if (!map) return;
 
-    const OVERLAP_NEUTRAL = "#e2e8f0";
-
     const loadData = async () => {
       const res = await fetch("/data/geo/states.geojson");
       const geojson = await res.json();
+      const overlapPatternsToAdd: { id: string; colors: string[] }[] = [];
 
       const features = geojson.features.map((f: GeoJSON.Feature) => {
         const rawId = f.id ?? (f.properties as { id?: string })?.id;
@@ -249,8 +320,19 @@ export function TerritoryMap({
         }
         const stateAbbr = getStateAbbrFromFeature(f);
         const data = stateAbbr ? stateData.get(stateAbbr) : null;
+        const overlap = stateAbbr ? overlapStates.has(stateAbbr) : false;
+        const overlapColors =
+          overlap && data
+            ? (data.groups?.map((g) => g.colorHex) ?? data.reps?.map((r) => r.colorHex) ?? [data.color])
+            : [];
+        if (overlap && overlapColors.length > 0) {
+          const effectiveColors =
+            overlapColors.length > 4 ? [overlapColors[0], overlapColors[1]] : overlapColors;
+          overlapPatternsToAdd.push({ id: overlapPatternId(effectiveColors), colors: overlapColors });
+        }
         if (stateAbbr) stateBboxesRef.current.set(stateAbbr, bboxFromGeometry(geometry));
-        const baseColor = data?.color ?? OVERLAP_NEUTRAL;
+        const baseColor =
+          overlap && overlapColors.length > 0 ? overlapColors[0] : (data?.color ?? "#e2e8f0");
         return {
           ...f,
           geometry,
@@ -258,6 +340,14 @@ export function TerritoryMap({
             ...(f.properties || {}),
             stateAbbr: stateAbbr || "",
             fillColor: baseColor,
+            overlap,
+            ...(overlap && overlapColors.length > 0
+              ? {
+                  overlapPatternId: overlapPatternId(
+                    overlapColors.length > 4 ? [overlapColors[0], overlapColors[1]] : overlapColors
+                  ),
+                }
+              : {}),
           },
         };
       });
@@ -270,14 +360,26 @@ export function TerritoryMap({
         map.addSource("states", { type: "geojson", data: sourceData });
       }
 
+      if (!map.hasImage("zebra-hatch")) {
+        const zebra = createZebraPattern();
+        map.addImage("zebra-hatch", zebra, { pixelRatio: 2 });
+      }
+      const addedPatternIds = new Set<string>();
+      for (const { id, colors } of overlapPatternsToAdd) {
+        if (!addedPatternIds.has(id)) {
+          addedPatternIds.add(id);
+          if (map.hasImage(id)) map.removeImage(id);
+          const pattern = createOverlapPattern(colors);
+          map.addImage(id, pattern, { pixelRatio: 2 });
+        }
+      }
+
       const fillLayer = map.getLayer("states-fill");
       if (fillLayer) map.removeLayer("states-fill");
+      const overlapLayer = map.getLayer("states-overlap");
+      if (overlapLayer) map.removeLayer("states-overlap");
       const outlineLayer = map.getLayer("states-outline");
       if (outlineLayer) map.removeLayer("states-outline");
-      ["overlap-swatch-1", "overlap-swatch-2", "overlap-swatch-3", "overlap-swatch-more"].forEach((id) => {
-        if (map.getLayer(id)) map.removeLayer(id);
-      });
-      if (map.getSource("overlap-swatches")) map.removeSource("overlap-swatches");
 
       map.addLayer({
         id: "states-fill",
@@ -290,6 +392,17 @@ export function TerritoryMap({
       });
 
       map.addLayer({
+        id: "states-overlap",
+        type: "fill",
+        source: "states",
+        filter: ["==", ["get", "overlap"], true],
+        paint: {
+          "fill-pattern": ["coalesce", ["get", "overlapPatternId"], "zebra-hatch"],
+          "fill-opacity": 0.7,
+        },
+      });
+
+      map.addLayer({
         id: "states-outline",
         type: "line",
         source: "states",
@@ -298,87 +411,6 @@ export function TerritoryMap({
           "line-width": 1,
         },
       });
-
-      const swatchFeatures: GeoJSON.Feature<GeoJSON.Point>[] = [];
-      const SWATCH_OFFSET_DEG = 0.04;
-      for (const stateAbbr of overlapStates) {
-        const bbox = stateBboxesRef.current.get(stateAbbr);
-        const data = stateData.get(stateAbbr);
-        if (!bbox || !data) continue;
-        const hasMultiple =
-          mode === "group"
-            ? (data.groups?.length ?? 0) >= 2
-            : (data.reps?.length ?? 0) >= 2;
-        if (!hasMultiple) continue;
-        const [minLng, minLat, maxLng, maxLat] = bbox;
-        const inset = 0.15;
-        const lng = minLng + (maxLng - minLng) * inset;
-        const lat = minLat + (maxLat - minLat) * inset;
-        const colors =
-          data.groups?.map((g) => g.colorHex) ?? data.reps?.map((r) => r.colorHex) ?? [];
-        if (colors.length === 0) continue;
-        const visible = colors.slice(0, 3);
-        const moreCount = Math.max(0, colors.length - 3);
-        visible.forEach((color, i) => {
-          swatchFeatures.push({
-            type: "Feature",
-            geometry: {
-              type: "Point",
-              coordinates: [lng, lat - i * SWATCH_OFFSET_DEG],
-            },
-            properties: { stateAbbr, color },
-          });
-        });
-        if (moreCount > 0) {
-          swatchFeatures.push({
-            type: "Feature",
-            geometry: {
-              type: "Point",
-              coordinates: [lng, lat - visible.length * SWATCH_OFFSET_DEG],
-            },
-            properties: { stateAbbr, moreCount },
-          });
-        }
-      }
-      if (swatchFeatures.length > 0) {
-        map.addSource("overlap-swatches", {
-          type: "geojson",
-          data: { type: "FeatureCollection", features: swatchFeatures },
-        });
-        map.addLayer(
-          {
-            id: "overlap-swatch-1",
-            type: "circle",
-            source: "overlap-swatches",
-            filter: ["has", "color"],
-            paint: {
-              "circle-radius": 6,
-              "circle-color": ["get", "color"],
-              "circle-stroke-width": 1,
-              "circle-stroke-color": "#64748b",
-            },
-          },
-          "states-outline"
-        );
-        map.addLayer(
-          {
-            id: "overlap-swatch-more",
-            type: "symbol",
-            source: "overlap-swatches",
-            filter: ["has", "moreCount"],
-            layout: {
-              "text-field": ["concat", "+", ["get", "moreCount"]],
-              "text-size": 11,
-              "text-anchor": "left",
-              "text-offset": [1.2, 0],
-            },
-            paint: {
-              "text-color": "#475569",
-            },
-          },
-          "states-outline"
-        );
-      }
 
       if (clickHandlerRef.current) map.off("click", clickHandlerRef.current);
       clickHandlerRef.current = (e: maplibregl.MapMouseEvent) => {
@@ -416,13 +448,17 @@ export function TerritoryMap({
                 const data = stateMap.get(fips5) ?? stateMap.get(rawFips);
                 if (!data) continue;
                 const key = `${stateAbbr}:${fips5}`;
-                const inOverlapSet = overlapCounties.has(key) || overlapCounties.has(`${stateAbbr}:${rawFips}`);
-                const hasMultiple =
-                  mode === "group"
-                    ? (data.groups?.length ?? 0) >= 2
-                    : (data.reps?.length ?? 0) >= 2;
-                const overlap = inOverlapSet && hasMultiple;
-                const countyBaseColor = overlap ? OVERLAP_NEUTRAL : data.color;
+                const overlap = overlapCounties.has(key) || overlapCounties.has(`${stateAbbr}:${rawFips}`);
+                const overlapColors = overlap
+                  ? (data.groups?.map((g) => g.colorHex) ?? data.reps?.map((r) => r.colorHex) ?? [data.color])
+                  : [];
+                if (overlap && overlapColors.length > 0) {
+                  const effectiveColors =
+                    overlapColors.length > 4 ? [overlapColors[0], overlapColors[1]] : overlapColors;
+                  overlapPatternsToAdd.push({ id: overlapPatternId(effectiveColors), colors: overlapColors });
+                }
+                const countyBaseColor =
+                  overlap && overlapColors.length > 0 ? overlapColors[0] : data.color;
                 countyFeatures.push({
                   ...f,
                   properties: {
@@ -430,6 +466,14 @@ export function TerritoryMap({
                     stateAbbr,
                     countyFips: fips5,
                     fillColor: countyBaseColor,
+                    overlap,
+                    ...(overlap && overlapColors.length > 0
+                      ? {
+                          overlapPatternId: overlapPatternId(
+                            overlapColors.length > 4 ? [overlapColors[0], overlapColors[1]] : overlapColors
+                          ),
+                        }
+                      : {}),
                   },
                 });
               }
@@ -440,6 +484,14 @@ export function TerritoryMap({
         );
       }
 
+      const addedOverlapIds = new Set<string>();
+      for (const { id, colors } of overlapPatternsToAdd) {
+        if (addedOverlapIds.has(id)) continue;
+        addedOverlapIds.add(id);
+        if (map.hasImage(id)) map.removeImage(id);
+        map.addImage(id, createOverlapPattern(colors), { pixelRatio: 2 });
+      }
+
       const countySourceData = { type: "FeatureCollection" as const, features: countyFeatures };
       if (map.getSource("counties")) {
         (map.getSource("counties") as maplibregl.GeoJSONSource).setData(countySourceData);
@@ -448,7 +500,7 @@ export function TerritoryMap({
       }
 
       if (countyFeatures.length > 0) {
-        ["counties-fill", "counties-outline"].forEach((id) => {
+        ["counties-fill", "counties-overlap", "counties-outline"].forEach((id) => {
           if (map.getLayer(id)) map.removeLayer(id);
         });
         if (!map.getSource("counties")) {
@@ -459,12 +511,25 @@ export function TerritoryMap({
           "states-outline"
         );
         map.addLayer(
+          {
+            id: "counties-overlap",
+            type: "fill",
+            source: "counties",
+            filter: ["==", ["get", "overlap"], true],
+            paint: {
+              "fill-pattern": ["coalesce", ["get", "overlapPatternId"], "zebra-hatch"],
+              "fill-opacity": 0.7,
+            },
+          },
+          "states-outline"
+        );
+        map.addLayer(
           { id: "counties-outline", type: "line", source: "counties", paint: { "line-color": "#64748b", "line-width": 0.5 } },
           "states-outline"
         );
       } else if (map.getSource("counties")) {
         (map.getSource("counties") as maplibregl.GeoJSONSource).setData({ type: "FeatureCollection", features: [] });
-        ["counties-fill", "counties-outline"].forEach((id) => {
+        ["counties-fill", "counties-overlap", "counties-outline"].forEach((id) => {
           if (map.getLayer(id)) map.removeLayer(id);
         });
       }
@@ -491,7 +556,7 @@ export function TerritoryMap({
     } else {
       map.once("load", loadData);
     }
-  }, [mode, stateData, countyData, overlapStates, overlapCounties, onStateClick]);
+  }, [stateData, countyData, overlapStates, overlapCounties, onStateClick]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -526,24 +591,29 @@ export function TerritoryMap({
           data = stateData.get(stateAbbr) ?? null;
         }
         if (data && popupRef.current && stateAbbr) {
+          const names =
+            mode === "group" && data.groups
+              ? data.groups.flatMap((g) =>
+                  g.reps.map((r) => `${r.name} (${g.name})`)
+                )
+              : data.reps
+                ? data.reps.map((r) => r.name)
+                : [];
+          const overlapCount =
+            mode === "group" && data.groups
+              ? data.groups.length
+              : data.reps
+                ? data.reps.length
+                : 0;
+          const moreLabel =
+            overlapCount > 4
+              ? `<br/><span class="text-slate-500 text-xs">+${overlapCount - 2} more (barber pole shows first 2)</span>`
+              : "";
           const label = f.properties?.countyFips ? `${stateAbbr} (county ${f.properties.countyFips})` : stateAbbr;
-          let body = "";
-          if (mode === "group" && data.groups && data.groups.length > 0) {
-            body = data.groups
-              .map(
-                (g) =>
-                  `<div class="mb-1.5"><div class="flex items-center gap-1.5 font-medium"><span class="w-3 h-3 rounded-sm shrink-0" style="background:${g.colorHex}"></span>${g.name}</div><ul class="ml-4 mt-0.5 text-slate-600">${g.reps.map((r) => `<li class="flex items-center gap-1"><span class="w-2 h-2 rounded-full shrink-0" style="background:${r.colorHex}"></span>${r.name}</li>`).join("")}</ul></div>`
-              )
-              .join("");
-          } else if (data.reps && data.reps.length > 0) {
-            body = `<ul class="text-slate-600">${data.reps.map((r) => `<li class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full shrink-0" style="background:${r.colorHex}"></span>${r.name}</li>`).join("")}</ul>`;
-          } else {
-            body = "—";
-          }
           popupRef.current
             .setLngLat(e.lngLat)
             .setHTML(
-              `<div class="p-2 text-sm max-w-xs"><strong class="text-slate-800">${label}</strong><div class="mt-1">${body}</div></div>`
+              `<div class="p-2 text-sm max-w-xs"><strong>${label}</strong><br/>${names.join(", ") || "—"}${moreLabel}</div>`
             )
             .addTo(map);
         }
