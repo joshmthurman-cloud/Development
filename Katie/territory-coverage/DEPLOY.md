@@ -39,6 +39,8 @@ Create a `.env` in the project root:
 AUTH_SECRET=your-generated-secret-here
 ```
 
+(The app is configured to trust the request host, so login works when accessed via IP or hostname.)
+
 ### 4. Database
 
 ```bash

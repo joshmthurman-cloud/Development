@@ -4,6 +4,7 @@ import { prisma } from "./db";
 import bcrypt from "bcryptjs";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true, // allow access via IP or hostname (e.g. http://10.200.0.235:8094)
   secret: process.env.AUTH_SECRET,
   providers: [
     Credentials({
