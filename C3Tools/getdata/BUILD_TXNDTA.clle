@@ -1,0 +1,9 @@
+// BUILD_TXNDTA - Create source file, compile TXNDTA, create program.
+// Run each command as a single line. Source member goes in JOSH/QRPGLESRC.
+// 1) Create long source PF so CPYFRMSTMF does not truncate (RCDLEN 240)
+CRTSRCPF FILE(JOSH/QRPGLESRC) RCDLEN(240)
+// 2) Copy your source into member TXNDTA (e.g. CPYFRMSTMF or paste in SEU)
+// 3) Create module
+CRTRPGMOD MODULE(JOSH/TXNDTA) SRCFILE(JOSH/QRPGLESRC) SRCMBR(TXNDTA)
+// 4) Create program
+CRTPGM PGM(JOSH/TXNDTA) MODULE(JOSH/TXNDTA) ACTGRP(*CALLER)

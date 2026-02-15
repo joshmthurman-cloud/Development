@@ -1,0 +1,74 @@
+     F************************************************************************ €
+     F* COPYRIGHT_2012_CURBSTONE_CORPORATION
+     F* PROGRAM.....:  C3RI0040
+     F* DESCRIPTION.:  C3DSPTXN by MFUKEY
+     F************************************************************************ €
+     FC3FD0040  CF   E             WORKSTN
+     FC3FP3030  IF   E           K DISK
+     ‚*************************************************************************€
+      /COPY C3/QRPGLESRC,C3RC0003
+     ‚*************************************************************************€
+     D Main            PR                  ExtPgm('C3RI0040')
+     D                                5    Const options( *nopass )
+      *
+     D Main            PI
+     D C$CUST                         5    Const options( *nopass )
+     ‚*************************************************************************
+     C                   Eval      ErrMsg = *blanks
+      * Is this a C3MT merchant? Set the Cust#
+     C     *DTAARA       DEFINE    C3DA5051      C3MT              1
+     C                   IN        C3MT
+     C                   If        C3MT = *blanks
+     C     *DTAARA       DEFINE    C3DA5050      CUSTNO            5
+     C                   IN        CUSTNO
+     C                   Else
+     C                   if        %parms() > 0
+     C                   Eval      CustNo = C$Cust
+     C                   else
+     C                   eval      ErrMsg='Cust# not passed'
+     C                   Endif
+     C                   Endif
+
+     C                   If        CustNo = *blanks
+     C                   eval      ErrMsg = 'Customer Number is blank'
+     C                   Endif
+
+     C                   If        ErrMsg = *blanks
+     C     CustNo        Setll     C3FP3030
+     C                   If        Not %Equal(C3FP3030)
+     C                   eval      ErrMsg = 'Invalid Customer Number'
+     C                   Endif
+     C                   Endif
+
+     C                   If        ErrMsg = *blanks
+     C                   CLEAR                   C#STRU
+      *
+     C                   DOW       *IN03 = *off
+     C                   Eval      EntKey='000000000000000'
+     C                   EXFMT     GETKEY
+     C                   If        *in03 = *off
+     C                   If        %subst(ENTKEY:1:5) <> CustNo
+     C                   Eval      ErrMsg = 'MFUKEY and CUSTNO Do Not Match'
+     C                   Exfmt     CUSERR
+     C                   Else
+     c                   CLEAR                   C#STRU
+     C                   Eval      MFUKEY = EntKey
+     C                   Eval      MFTYPE = 'RP'
+     C                   Eval      MFCUST = CustNo
+     C                   Exsr      C@SEND
+     C                   Exsr      C@RECV
+     C                   If        MFATAL = '#'
+     C                   Exfmt     NotFnd
+     C                   Else
+     C                   Exfmt     DspScr
+     C                   Endif
+     C                   Endif
+     C                   Endif
+     C                   Enddo
+     C                   Else                                                   Cust# Error
+     C                   Exfmt     CUSERR
+     C                   Endif
+     C                   Seton                                        LR
+     C                   Return
+     ‚*************************************************************************
+      /COPY C3/QRPGLESRC,C3RC0004
