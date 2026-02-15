@@ -249,13 +249,8 @@ export function TerritoryMap({
         }
         const stateAbbr = getStateAbbrFromFeature(f);
         const data = stateAbbr ? stateData.get(stateAbbr) : null;
-        const hasMultiple =
-          mode === "group"
-            ? (data?.groups?.length ?? 0) >= 2
-            : (data?.reps?.length ?? 0) >= 2;
-        const overlap = stateAbbr && overlapStates.has(stateAbbr) && hasMultiple;
         if (stateAbbr) stateBboxesRef.current.set(stateAbbr, bboxFromGeometry(geometry));
-        const baseColor = overlap ? OVERLAP_NEUTRAL : (data?.color ?? OVERLAP_NEUTRAL);
+        const baseColor = data?.color ?? OVERLAP_NEUTRAL;
         return {
           ...f,
           geometry,
