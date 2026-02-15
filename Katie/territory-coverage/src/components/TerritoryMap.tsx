@@ -36,20 +36,34 @@ interface TerritoryMapProps {
   onStateClick?: (stateAbbr: string, data: TerritoryData | null) => void;
 }
 
-function createZebraPattern(): { width: number; height: number; data: Uint8Array } {
-  const size = 16;
+function hexToRgb(hex: string): [number, number, number] {
+  const n = parseInt(hex.replace(/^#/, ""), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+function createOverlapPattern(colors: string[]): { width: number; height: number; data: Uint8Array } {
+  const size = 32;
   const data = new Uint8Array(size * size * 4);
+  const stripeWidth = 4;
+  const rgb = colors.slice(0, 2).map(hexToRgb);
+  if (rgb.length === 1) rgb.push([200, 200, 200]);
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const i = (y * size + x) * 4;
-      const stripe = (x + y) % 2 === 0 ? 0 : 255;
-      data[i] = stripe;
-      data[i + 1] = stripe;
-      data[i + 2] = stripe;
-      data[i + 3] = 180;
+      const stripeIndex = Math.floor((x + y) / stripeWidth) % 2;
+      const [r, g, b] = rgb[stripeIndex];
+      data[i] = r;
+      data[i + 1] = g;
+      data[i + 2] = b;
+      data[i + 3] = 255;
     }
   }
   return { width: size, height: size, data };
+}
+
+function overlapPatternId(colors: string[]): string {
+  const key = [...colors].sort().map((c) => c.replace(/^#/, "")).join("");
+  return "overlap-" + key.slice(0, 24);
 }
 
 function getStateAbbrFromFeature(feature: GeoJSON.Feature): string | null {
@@ -79,6 +93,21 @@ function transformCoords(
   ]);
 }
 
+function transformCoordsScale2(
+  coords: number[][],
+  scaleX: number,
+  scaleY: number,
+  centerLon: number,
+  centerLat: number,
+  targetLon: number,
+  targetLat: number
+): number[][] {
+  return coords.map(([lon, lat]) => [
+    (lon - centerLon) * scaleX + targetLon,
+    (lat - centerLat) * scaleY + targetLat,
+  ]);
+}
+
 function transformGeometry(
   geom: GeoJSON.Polygon | GeoJSON.MultiPolygon,
   scale: number,
@@ -100,6 +129,33 @@ function transformGeometry(
     coordinates: geom.coordinates.map((poly) =>
       poly.map((ring) =>
         transformCoords(ring, scale, centerLon, centerLat, targetLon, targetLat)
+      )
+    ),
+  };
+}
+
+function transformGeometryScale2(
+  geom: GeoJSON.Polygon | GeoJSON.MultiPolygon,
+  scaleX: number,
+  scaleY: number,
+  centerLon: number,
+  centerLat: number,
+  targetLon: number,
+  targetLat: number
+): GeoJSON.Polygon | GeoJSON.MultiPolygon {
+  if (geom.type === "Polygon") {
+    return {
+      type: "Polygon",
+      coordinates: geom.coordinates.map((ring) =>
+        transformCoordsScale2(ring, scaleX, scaleY, centerLon, centerLat, targetLon, targetLat)
+      ),
+    };
+  }
+  return {
+    type: "MultiPolygon",
+    coordinates: geom.coordinates.map((poly) =>
+      poly.map((ring) =>
+        transformCoordsScale2(ring, scaleX, scaleY, centerLon, centerLat, targetLon, targetLat)
       )
     ),
   };
@@ -194,14 +250,16 @@ export function TerritoryMap({
     const loadData = async () => {
       const res = await fetch("/data/geo/states.geojson");
       const geojson = await res.json();
+      const overlapPatternsToAdd: { id: string; colors: string[] }[] = [];
 
       const features = geojson.features.map((f: GeoJSON.Feature) => {
         const rawId = f.id ?? (f.properties as { id?: string })?.id;
         const fips = typeof rawId === "string" ? (rawId.length === 1 ? `0${rawId}` : rawId) : String(rawId ?? "");
         let geometry = f.geometry as GeoJSON.Polygon | GeoJSON.MultiPolygon;
         if (fips === "02" && geometry) {
-          geometry = transformGeometry(
+          geometry = transformGeometryScale2(
             geometry,
+            0.28,
             0.35,
             AK_CENTER[0],
             AK_CENTER[1],
@@ -221,6 +279,13 @@ export function TerritoryMap({
         const stateAbbr = getStateAbbrFromFeature(f);
         const data = stateAbbr ? stateData.get(stateAbbr) : null;
         const overlap = stateAbbr ? overlapStates.has(stateAbbr) : false;
+        const overlapColors =
+          overlap && data
+            ? (data.groups?.map((g) => g.colorHex) ?? data.reps?.map((r) => r.colorHex) ?? [data.color])
+            : [];
+        if (overlap && overlapColors.length > 0) {
+          overlapPatternsToAdd.push({ id: overlapPatternId(overlapColors), colors: overlapColors });
+        }
         if (stateAbbr) stateBboxesRef.current.set(stateAbbr, bboxFromGeometry(geometry));
         return {
           ...f,
@@ -230,6 +295,7 @@ export function TerritoryMap({
             stateAbbr: stateAbbr || "",
             fillColor: data?.color ?? "#e2e8f0",
             overlap,
+            ...(overlap && overlapColors.length > 0 ? { overlapPatternId: overlapPatternId(overlapColors) } : {}),
           },
         };
       });
@@ -245,6 +311,16 @@ export function TerritoryMap({
       if (!map.hasImage("zebra-hatch")) {
         const zebra = createZebraPattern();
         map.addImage("zebra-hatch", zebra, { pixelRatio: 2 });
+      }
+      const addedPatternIds = new Set<string>();
+      for (const { id, colors } of overlapPatternsToAdd) {
+        if (!addedPatternIds.has(id)) {
+          addedPatternIds.add(id);
+          if (!map.hasImage(id)) {
+            const pattern = createOverlapPattern(colors);
+            map.addImage(id, pattern, { pixelRatio: 2 });
+          }
+        }
       }
 
       const fillLayer = map.getLayer("states-fill");
@@ -270,8 +346,8 @@ export function TerritoryMap({
         source: "states",
         filter: ["==", ["get", "overlap"], true],
         paint: {
-          "fill-pattern": "zebra-hatch",
-          "fill-opacity": 0.6,
+          "fill-pattern": ["coalesce", ["get", "overlapPatternId"], "zebra-hatch"],
+          "fill-opacity": 0.9,
         },
       });
 
@@ -322,6 +398,12 @@ export function TerritoryMap({
                 if (!data) continue;
                 const key = `${stateAbbr}:${fips5}`;
                 const overlap = overlapCounties.has(key) || overlapCounties.has(`${stateAbbr}:${rawFips}`);
+                const overlapColors = overlap
+                  ? (data.groups?.map((g) => g.colorHex) ?? data.reps?.map((r) => r.colorHex) ?? [data.color])
+                  : [];
+                if (overlap && overlapColors.length > 0) {
+                  overlapPatternsToAdd.push({ id: overlapPatternId(overlapColors), colors: overlapColors });
+                }
                 countyFeatures.push({
                   ...f,
                   properties: {
@@ -330,6 +412,7 @@ export function TerritoryMap({
                     countyFips: fips5,
                     fillColor: data.color,
                     overlap,
+                    ...(overlap && overlapColors.length > 0 ? { overlapPatternId: overlapPatternId(overlapColors) } : {}),
                   },
                 });
               }
@@ -338,6 +421,12 @@ export function TerritoryMap({
             }
           })
         );
+      }
+
+      for (const { id, colors } of overlapPatternsToAdd) {
+        if (!map.hasImage(id)) {
+          map.addImage(id, createOverlapPattern(colors), { pixelRatio: 2 });
+        }
       }
 
       const countySourceData = { type: "FeatureCollection" as const, features: countyFeatures };
@@ -364,7 +453,10 @@ export function TerritoryMap({
             type: "fill",
             source: "counties",
             filter: ["==", ["get", "overlap"], true],
-            paint: { "fill-pattern": "zebra-hatch", "fill-opacity": 0.6 },
+            paint: {
+              "fill-pattern": ["coalesce", ["get", "overlapPatternId"], "zebra-hatch"],
+              "fill-opacity": 0.9,
+            },
           },
           "states-outline"
         );
