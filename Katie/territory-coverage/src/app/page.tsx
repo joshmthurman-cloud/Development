@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { TerritoryMap, type TerritoryData, type MapMode } from "@/components/TerritoryMap";
+import { AppHeader } from "@/components/AppHeader";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 
@@ -284,23 +285,20 @@ export default function DashboardPage() {
 
   return (
     <div className="h-screen flex flex-col bg-slate-50">
-      <header className="flex items-center justify-between px-4 py-2 bg-white border-b border-slate-200">
-        <h1 className="text-xl font-semibold text-slate-800">Territory Coverage</h1>
-        <nav className="flex items-center gap-4">
-          <Link
-            href="/groups"
-            className="text-sm text-slate-600 hover:text-slate-900"
-          >
-            Groups
-          </Link>
-          <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="text-sm text-slate-600 hover:text-slate-900"
-          >
-            Sign out
-          </button>
-        </nav>
-      </header>
+      <AppHeader title="Territory Coverage">
+        <Link
+          href="/groups"
+          className="text-sm text-slate-600 hover:text-slate-900"
+        >
+          Groups
+        </Link>
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="text-sm text-slate-600 hover:text-slate-900"
+        >
+          Sign out
+        </button>
+      </AppHeader>
 
       <main className="flex-1 min-h-0">
         <PanelGroup direction="horizontal">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
+import { AppHeader } from "@/components/AppHeader";
 
 interface Group {
   id: string;
@@ -106,23 +107,20 @@ export default function GroupsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="flex items-center justify-between px-4 py-2 bg-white border-b border-slate-200">
-        <h1 className="text-xl font-semibold text-slate-800">Territory Coverage</h1>
-        <nav className="flex items-center gap-4">
-          <Link href="/" className="text-sm text-slate-600 hover:text-slate-900">
-            Dashboard
-          </Link>
-          <Link href="/groups" className="text-sm font-medium text-slate-900">
-            Groups
-          </Link>
-          <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="text-sm text-slate-600 hover:text-slate-900"
-          >
-            Sign out
-          </button>
-        </nav>
-      </header>
+      <AppHeader title="Territory Coverage">
+        <Link href="/" className="text-sm text-slate-600 hover:text-slate-900">
+          Dashboard
+        </Link>
+        <Link href="/groups" className="text-sm font-medium text-slate-900">
+          Groups
+        </Link>
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="text-sm text-slate-600 hover:text-slate-900"
+        >
+          Sign out
+        </button>
+      </AppHeader>
 
       <main className="p-6 max-w-4xl mx-auto">
         <h2 className="text-lg font-medium text-slate-800 mb-4">Groups</h2>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
+import { AppHeader } from "@/components/AppHeader";
 import { CountyEditorModal } from "@/components/CountyEditorModal";
 
 const STATE_ABBREVS = [
@@ -172,25 +173,20 @@ export default function RepTerritoryPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="flex items-center justify-between px-4 py-2 bg-white border-b border-slate-200">
-        <h1 className="text-xl font-semibold text-slate-800">
-          Territory: {rep.name}
-        </h1>
-        <nav className="flex items-center gap-4">
-          <Link href="/groups" className="text-sm text-slate-600 hover:text-slate-900">
-            Groups
-          </Link>
-          <Link href="/" className="text-sm text-slate-600 hover:text-slate-900">
-            Dashboard
-          </Link>
-          <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="text-sm text-slate-600 hover:text-slate-900"
-          >
-            Sign out
-          </button>
-        </nav>
-      </header>
+      <AppHeader title={`Territory: ${rep.name}`}>
+        <Link href="/groups" className="text-sm text-slate-600 hover:text-slate-900">
+          Groups
+        </Link>
+        <Link href="/" className="text-sm text-slate-600 hover:text-slate-900">
+          Dashboard
+        </Link>
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="text-sm text-slate-600 hover:text-slate-900"
+        >
+          Sign out
+        </button>
+      </AppHeader>
 
       <main className="p-6 max-w-4xl mx-auto">
         <p className="text-slate-600 mb-4">
