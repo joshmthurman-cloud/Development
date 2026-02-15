@@ -117,7 +117,6 @@ export default function DashboardPage() {
                   overlapStates.add(stateAbbr);
                 } else {
                   existing.groups![idx].reps.push({ name: rep.name, colorHex: repColor });
-                  overlapStates.add(stateAbbr);
                 }
               } else {
                 stateData.set(stateAbbr, {
@@ -151,7 +150,6 @@ export default function DashboardPage() {
                     overlapCounties.add(key);
                   } else {
                     existing.groups![idx].reps.push(entry.groups![0].reps[0]);
-                    overlapCounties.add(key);
                   }
                 } else {
                   stateMap.set(fips5, entry);
