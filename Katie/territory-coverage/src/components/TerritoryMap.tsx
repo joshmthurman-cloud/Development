@@ -249,7 +249,11 @@ export function TerritoryMap({
         }
         const stateAbbr = getStateAbbrFromFeature(f);
         const data = stateAbbr ? stateData.get(stateAbbr) : null;
-        const overlap = stateAbbr ? overlapStates.has(stateAbbr) : false;
+        const hasMultiple =
+          mode === "group"
+            ? (data?.groups?.length ?? 0) >= 2
+            : (data?.reps?.length ?? 0) >= 2;
+        const overlap = stateAbbr && overlapStates.has(stateAbbr) && hasMultiple;
         if (stateAbbr) stateBboxesRef.current.set(stateAbbr, bboxFromGeometry(geometry));
         const baseColor = overlap ? OVERLAP_NEUTRAL : (data?.color ?? OVERLAP_NEUTRAL);
         return {
@@ -306,6 +310,11 @@ export function TerritoryMap({
         const bbox = stateBboxesRef.current.get(stateAbbr);
         const data = stateData.get(stateAbbr);
         if (!bbox || !data) continue;
+        const hasMultiple =
+          mode === "group"
+            ? (data.groups?.length ?? 0) >= 2
+            : (data.reps?.length ?? 0) >= 2;
+        if (!hasMultiple) continue;
         const [minLng, minLat, maxLng, maxLat] = bbox;
         const inset = 0.15;
         const lng = minLng + (maxLng - minLng) * inset;
@@ -412,7 +421,12 @@ export function TerritoryMap({
                 const data = stateMap.get(fips5) ?? stateMap.get(rawFips);
                 if (!data) continue;
                 const key = `${stateAbbr}:${fips5}`;
-                const overlap = overlapCounties.has(key) || overlapCounties.has(`${stateAbbr}:${rawFips}`);
+                const inOverlapSet = overlapCounties.has(key) || overlapCounties.has(`${stateAbbr}:${rawFips}`);
+                const hasMultiple =
+                  mode === "group"
+                    ? (data.groups?.length ?? 0) >= 2
+                    : (data.reps?.length ?? 0) >= 2;
+                const overlap = inOverlapSet && hasMultiple;
                 const countyBaseColor = overlap ? OVERLAP_NEUTRAL : data.color;
                 countyFeatures.push({
                   ...f,
@@ -482,7 +496,7 @@ export function TerritoryMap({
     } else {
       map.once("load", loadData);
     }
-  }, [stateData, countyData, overlapStates, overlapCounties, onStateClick]);
+  }, [mode, stateData, countyData, overlapStates, overlapCounties, onStateClick]);
 
   useEffect(() => {
     const map = mapRef.current;
