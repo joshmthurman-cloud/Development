@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Group {
+  id                 String  @id @default(cuid())
+  name               String  @unique
+  colorHex           String
+  servicesWholeState Boolean @default(true)
+  reps               Rep[]
+}
+
+model Rep {
+  id          String      @id @default(cuid())
+  name        String
+  groupId     String
+  group       Group       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  repColorHex String?
+  territories Territory[]
+
+  @@unique([groupId, name])
+}
+
+enum OwnerType {
+  REP
+}
+
+enum TerritoryLevel {
+  STATE
+  COUNTY
+}
+
+model Territory {
+  id         String         @id @default(cuid())
+  ownerType  OwnerType      @default(REP)
+  ownerId   String
+  rep        Rep            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  level      TerritoryLevel
+  stateAbbr  String
+  countyFips String @default("") // "" for STATE; FIPS code for COUNTY
+
+  @@unique([ownerId, stateAbbr, level, countyFips])
+}
