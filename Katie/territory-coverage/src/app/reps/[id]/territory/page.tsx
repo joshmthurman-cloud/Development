@@ -189,9 +189,17 @@ export default function RepTerritoryPage() {
       </AppHeader>
 
       <main className="p-6 max-w-4xl mx-auto">
-        <p className="text-slate-600 mb-4">
-          Group: {rep.group.name}
-        </p>
+        <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
+          <p className="text-slate-600">
+            Group: {rep.group.name}
+          </p>
+          <Link
+            href="/groups"
+            className="text-sm text-blue-600 hover:text-blue-800 hover:underline shrink-0"
+          >
+            ← Back to Groups
+          </Link>
+        </div>
 
         <h2 className="text-lg font-medium text-slate-800 mb-3">States</h2>
 

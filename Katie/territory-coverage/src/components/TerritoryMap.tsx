@@ -41,29 +41,46 @@ function hexToRgb(hex: string): [number, number, number] {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
-/** Barber-pole overlap pattern: diagonal semi-transparent stripes over transparent gaps so base fill shows through. */
+const TILE_SIZE = 256;
+const PERIOD = 32;
+const STRIPE_WIDTH = 20;
+const GAP_WIDTH = 12;
+const STRIPE_ALPHA = 160;
+
+/** Stable hash for overlap pattern id so we can remove/replace when colors change. */
+function overlapPatternId(colors: string[]): string {
+  const key = [...colors].sort().map((c) => c.replace(/^#/, "")).join("");
+  let h = 5381;
+  for (let i = 0; i < key.length; i++) h = ((h << 5) + h) ^ key.charCodeAt(i);
+  return "overlap-" + (h >>> 0).toString(36);
+}
+
+/**
+ * Seamless barber-pole overlap pattern. Tile 256x256, period divides tile (no seams).
+ * One diagonal: band = (x - y) % period, inStripe = band < stripeWidth.
+ * If >4 colors: two-color only (base + one stripe). Otherwise cycle colors[1..] over base colors[0].
+ */
 function createOverlapPattern(colors: string[]): { width: number; height: number; data: Uint8Array } {
-  const size = 128;
-  const stripeWidth = 10;
-  const gapWidth = 2;
-  const period = stripeWidth + gapWidth;
-  const stripeAlpha = 180;
-  const data = new Uint8Array(size * size * 4);
-  const stripeColors = colors.length > 1 ? colors.slice(1) : colors;
+  const data = new Uint8Array(TILE_SIZE * TILE_SIZE * 4);
+  const stripeColors =
+    colors.length > 4
+      ? [colors[1]]
+      : colors.length > 1
+        ? colors.slice(1)
+        : [colors[0]];
   const rgb = stripeColors.map(hexToRgb);
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const i = (y * size + x) * 4;
-      const diag = x + y;
-      const pixelInPeriod = diag % period;
-      if (pixelInPeriod < stripeWidth) {
-        const band = Math.floor(diag / period);
-        const colorIndex = band % rgb.length;
+  for (let y = 0; y < TILE_SIZE; y++) {
+    for (let x = 0; x < TILE_SIZE; x++) {
+      const i = (y * TILE_SIZE + x) * 4;
+      const band = ((x - y) % PERIOD + PERIOD) % PERIOD;
+      const inStripe = band < STRIPE_WIDTH;
+      if (inStripe) {
+        const colorIndex = Math.floor((x - y + TILE_SIZE) / PERIOD) % rgb.length;
         const [r, g, b] = rgb[colorIndex];
         data[i] = r;
         data[i + 1] = g;
         data[i + 2] = b;
-        data[i + 3] = stripeAlpha;
+        data[i + 3] = STRIPE_ALPHA;
       } else {
         data[i] = 0;
         data[i + 1] = 0;
@@ -72,12 +89,7 @@ function createOverlapPattern(colors: string[]): { width: number; height: number
       }
     }
   }
-  return { width: size, height: size, data };
-}
-
-function overlapPatternId(colors: string[]): string {
-  const key = [...colors].sort().map((c) => c.replace(/^#/, "")).join("");
-  return "overlap-" + key.slice(0, 24);
+  return { width: TILE_SIZE, height: TILE_SIZE, data };
 }
 
 function createZebraPattern(): { width: number; height: number; data: Uint8Array } {
@@ -314,7 +326,9 @@ export function TerritoryMap({
             ? (data.groups?.map((g) => g.colorHex) ?? data.reps?.map((r) => r.colorHex) ?? [data.color])
             : [];
         if (overlap && overlapColors.length > 0) {
-          overlapPatternsToAdd.push({ id: overlapPatternId(overlapColors), colors: overlapColors });
+          const effectiveColors =
+            overlapColors.length > 4 ? [overlapColors[0], overlapColors[1]] : overlapColors;
+          overlapPatternsToAdd.push({ id: overlapPatternId(effectiveColors), colors: overlapColors });
         }
         if (stateAbbr) stateBboxesRef.current.set(stateAbbr, bboxFromGeometry(geometry));
         const baseColor =
@@ -327,7 +341,13 @@ export function TerritoryMap({
             stateAbbr: stateAbbr || "",
             fillColor: baseColor,
             overlap,
-            ...(overlap && overlapColors.length > 0 ? { overlapPatternId: overlapPatternId(overlapColors) } : {}),
+            ...(overlap && overlapColors.length > 0
+              ? {
+                  overlapPatternId: overlapPatternId(
+                    overlapColors.length > 4 ? [overlapColors[0], overlapColors[1]] : overlapColors
+                  ),
+                }
+              : {}),
           },
         };
       });
@@ -378,7 +398,7 @@ export function TerritoryMap({
         filter: ["==", ["get", "overlap"], true],
         paint: {
           "fill-pattern": ["coalesce", ["get", "overlapPatternId"], "zebra-hatch"],
-          "fill-opacity": 0.75,
+          "fill-opacity": 0.7,
         },
       });
 
@@ -433,7 +453,9 @@ export function TerritoryMap({
                   ? (data.groups?.map((g) => g.colorHex) ?? data.reps?.map((r) => r.colorHex) ?? [data.color])
                   : [];
                 if (overlap && overlapColors.length > 0) {
-                  overlapPatternsToAdd.push({ id: overlapPatternId(overlapColors), colors: overlapColors });
+                  const effectiveColors =
+                    overlapColors.length > 4 ? [overlapColors[0], overlapColors[1]] : overlapColors;
+                  overlapPatternsToAdd.push({ id: overlapPatternId(effectiveColors), colors: overlapColors });
                 }
                 const countyBaseColor =
                   overlap && overlapColors.length > 0 ? overlapColors[0] : data.color;
@@ -445,7 +467,13 @@ export function TerritoryMap({
                     countyFips: fips5,
                     fillColor: countyBaseColor,
                     overlap,
-                    ...(overlap && overlapColors.length > 0 ? { overlapPatternId: overlapPatternId(overlapColors) } : {}),
+                    ...(overlap && overlapColors.length > 0
+                      ? {
+                          overlapPatternId: overlapPatternId(
+                            overlapColors.length > 4 ? [overlapColors[0], overlapColors[1]] : overlapColors
+                          ),
+                        }
+                      : {}),
                   },
                 });
               }
@@ -456,7 +484,10 @@ export function TerritoryMap({
         );
       }
 
+      const addedOverlapIds = new Set<string>();
       for (const { id, colors } of overlapPatternsToAdd) {
+        if (addedOverlapIds.has(id)) continue;
+        addedOverlapIds.add(id);
         if (map.hasImage(id)) map.removeImage(id);
         map.addImage(id, createOverlapPattern(colors), { pixelRatio: 2 });
       }
@@ -487,7 +518,7 @@ export function TerritoryMap({
             filter: ["==", ["get", "overlap"], true],
             paint: {
               "fill-pattern": ["coalesce", ["get", "overlapPatternId"], "zebra-hatch"],
-              "fill-opacity": 0.75,
+              "fill-opacity": 0.7,
             },
           },
           "states-outline"
@@ -568,11 +599,21 @@ export function TerritoryMap({
               : data.reps
                 ? data.reps.map((r) => r.name)
                 : [];
+          const overlapCount =
+            mode === "group" && data.groups
+              ? data.groups.length
+              : data.reps
+                ? data.reps.length
+                : 0;
+          const moreLabel =
+            overlapCount > 4
+              ? `<br/><span class="text-slate-500 text-xs">+${overlapCount - 2} more (barber pole shows first 2)</span>`
+              : "";
           const label = f.properties?.countyFips ? `${stateAbbr} (county ${f.properties.countyFips})` : stateAbbr;
           popupRef.current
             .setLngLat(e.lngLat)
             .setHTML(
-              `<div class="p-2 text-sm max-w-xs"><strong>${label}</strong><br/>${names.join(", ") || "—"}</div>`
+              `<div class="p-2 text-sm max-w-xs"><strong>${label}</strong><br/>${names.join(", ") || "—"}${moreLabel}</div>`
             )
             .addTo(map);
         }

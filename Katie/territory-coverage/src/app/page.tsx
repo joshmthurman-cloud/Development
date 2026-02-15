@@ -407,6 +407,16 @@ export default function DashboardPage() {
                             + {selectedStateData.countyCount} county-level coverage
                           </p>
                         )}
+                        {(selectedStateData.aggregatedGroups.length > 4 ||
+                          selectedStateData.aggregatedReps.length > 4) && (
+                          <p className="text-slate-500 text-xs">
+                            Map shows first 2 colors; +
+                            {selectedStateData.aggregatedGroups.length > 0
+                              ? selectedStateData.aggregatedGroups.length - 2
+                              : selectedStateData.aggregatedReps.length - 2}{" "}
+                            more
+                          </p>
+                        )}
                       </div>
                     ) : (
                       <p className="text-slate-500 text-sm">No coverage in this state</p>
