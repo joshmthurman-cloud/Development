@@ -66,6 +66,22 @@ function overlapPatternId(colors: string[]): string {
   return "overlap-" + key.slice(0, 24);
 }
 
+function createZebraPattern(): { width: number; height: number; data: Uint8Array } {
+  const size = 16;
+  const data = new Uint8Array(size * size * 4);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const i = (y * size + x) * 4;
+      const stripe = (x + y) % 2 === 0 ? 0 : 255;
+      data[i] = stripe;
+      data[i + 1] = stripe;
+      data[i + 2] = stripe;
+      data[i + 3] = 180;
+    }
+  }
+  return { width: size, height: size, data };
+}
+
 function getStateAbbrFromFeature(feature: GeoJSON.Feature): string | null {
   const id = feature.id ?? feature.properties?.id;
   if (typeof id === "string") {
