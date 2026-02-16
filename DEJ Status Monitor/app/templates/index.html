@@ -30,6 +30,35 @@
         </div>
     </form>
 </div>
+{% elif merchants|length > 1 %}
+<div class="card" style="margin-bottom: 20px;">
+    <h2>Filter by Merchant</h2>
+    <form method="get" action="/" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        {% if request.query_params.get('date_range') %}
+        <input type="hidden" name="date_range" value="{{ request.query_params.get('date_range') }}">
+        {% endif %}
+        {% if request.query_params.get('start_date') %}
+        <input type="hidden" name="start_date" value="{{ request.query_params.get('start_date') }}">
+        {% endif %}
+        {% if request.query_params.get('end_date') %}
+        <input type="hidden" name="end_date" value="{{ request.query_params.get('end_date') }}">
+        {% endif %}
+        <select name="merchant" id="merchantFilter" style="padding: 8px; font-size: 14px; min-width: 300px;">
+            <option value="">All my merchants</option>
+            {% for m in merchants %}
+            <option value="{{ m.code }}" {% if selected_merchant == m.code %}selected{% endif %}>{{ m.display }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn">Filter</button>
+        {% if selected_merchant %}
+        <a href="/merchant/{{ selected_merchant }}" class="btn" style="background: #27ae60;">View Merchant Stats</a>
+        {% endif %}
+        <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
+            <input type="text" id="manualTPN" placeholder="Enter TPN" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; width: 150px;" onkeypress="if(event.key==='Enter') viewTPN()">
+            <button type="button" onclick="viewTPN()" class="btn secondary">View TPN</button>
+        </div>
+    </form>
+</div>
 {% else %}
 <div class="card" style="margin-bottom: 20px;">
     <form method="get" action="/" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
