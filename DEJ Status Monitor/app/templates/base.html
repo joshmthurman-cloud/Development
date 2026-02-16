@@ -234,6 +234,7 @@
                     </div>
                     {% endif %}
                     <span id="nextCheckCountdown" class="topbar__meta topbar__countdown">Loading...</span>
+                    <span class="topbar__meta topbar__version">Terminal Status Monitor v{{ _version }}</span>
                     {% if current_user.is_admin %}
                     <div id="terminalCounts" class="topbar__meta topbar__counts">
                         <div>Steam Terminals: <span id="steamCount">-</span></div>
@@ -241,6 +242,7 @@
                     {% endif %}
                 {% else %}
                     <a href="/login" class="btn btn-primary">Login</a>
+                    <span class="topbar__meta topbar__version">Terminal Status Monitor v{{ _version }}</span>
                 {% endif %}
                 </div>
             </div>
@@ -250,7 +252,7 @@
         {% block content %}{% endblock %}
     </div>
     <footer class="app-footer">
-        <span>Terminal Status Monitor v{{ _version }}</span>
+        <span>Terminal Status Monitor</span>
     </footer>
     <script>
         async function runCheck() {

@@ -138,7 +138,7 @@ body {
 
 .topbar__title {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 2.7rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   min-width: 0;
@@ -182,7 +182,9 @@ body {
 
 .topbar__meta.topbar__email { margin-right: var(--space-xs); }
 .topbar__meta.topbar__countdown,
-.topbar__meta.topbar__counts { text-align: right; font-size: 0.75rem; opacity: 0.9; }
+.topbar__meta.topbar__counts,
+.topbar__meta.topbar__version { text-align: right; font-size: 0.75rem; opacity: 0.9; }
+.topbar__meta.topbar__version { display: block; }
 
 .topbar__meta .admin-badge {
   color: var(--color-accent);
