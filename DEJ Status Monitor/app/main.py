@@ -129,7 +129,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "change-this-secret-key-in-production-use-r
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
 # Application version
-APP_VERSION = "1.1.2"
+APP_VERSION = "1.1.3"
 
 # Templates
 template_dir = Path(__file__).parent / "templates"
