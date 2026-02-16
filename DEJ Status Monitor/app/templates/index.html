@@ -5,27 +5,29 @@
 <div class="card panel section">
     <h2 class="section__title">Filter by Merchant</h2>
     <form method="get" action="/" class="filter-form">
-        {% if request.query_params.get('date_range') %}
-        <input type="hidden" name="date_range" value="{{ request.query_params.get('date_range') }}">
-        {% endif %}
-        {% if request.query_params.get('start_date') %}
-        <input type="hidden" name="start_date" value="{{ request.query_params.get('start_date') }}">
-        {% endif %}
-        {% if request.query_params.get('end_date') %}
-        <input type="hidden" name="end_date" value="{{ request.query_params.get('end_date') }}">
-        {% endif %}
-        <select name="merchant" id="merchantFilter" class="select">
-            <option value="">All Merchants</option>
-            {% for m in merchants %}
-            <option value="{{ m.code }}" {% if selected_merchant == m.code %}selected{% endif %}>{{ m.display }}</option>
-            {% endfor %}
-        </select>
-        <button type="submit" class="btn btn-primary">Filter</button>
-        {% if selected_merchant %}
-        <a href="/merchant/{{ selected_merchant }}" class="btn btn-primary">View Merchant Stats</a>
-        {% endif %}
-        <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
-            <input type="text" id="manualTPN" class="input" placeholder="Enter TPN" style="width: 150px;" onkeypress="if(event.key==='Enter') viewTPN()">
+        <div class="filter-form__left">
+            {% if request.query_params.get('date_range') %}
+            <input type="hidden" name="date_range" value="{{ request.query_params.get('date_range') }}">
+            {% endif %}
+            {% if request.query_params.get('start_date') %}
+            <input type="hidden" name="start_date" value="{{ request.query_params.get('start_date') }}">
+            {% endif %}
+            {% if request.query_params.get('end_date') %}
+            <input type="hidden" name="end_date" value="{{ request.query_params.get('end_date') }}">
+            {% endif %}
+            <select name="merchant" id="merchantFilter" class="select">
+                <option value="">All Merchants</option>
+                {% for m in merchants %}
+                <option value="{{ m.code }}" {% if selected_merchant == m.code %}selected{% endif %}>{{ m.display }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary">Filter</button>
+            {% if selected_merchant %}
+            <a href="/merchant/{{ selected_merchant }}" class="btn btn-primary">View Merchant Stats</a>
+            {% endif %}
+        </div>
+        <div class="filter-form__right">
+            <input type="text" id="manualTPN" class="input" placeholder="Enter TPN" onkeypress="if(event.key==='Enter') viewTPN()">
             <button type="button" onclick="viewTPN()" class="btn btn-secondary">View TPN</button>
         </div>
     </form>
@@ -34,27 +36,29 @@
 <div class="card panel section">
     <h2 class="section__title">Filter by Merchant</h2>
     <form method="get" action="/" class="filter-form">
-        {% if request.query_params.get('date_range') %}
-        <input type="hidden" name="date_range" value="{{ request.query_params.get('date_range') }}">
-        {% endif %}
-        {% if request.query_params.get('start_date') %}
-        <input type="hidden" name="start_date" value="{{ request.query_params.get('start_date') }}">
-        {% endif %}
-        {% if request.query_params.get('end_date') %}
-        <input type="hidden" name="end_date" value="{{ request.query_params.get('end_date') }}">
-        {% endif %}
-        <select name="merchant" id="merchantFilter" class="select">
-            <option value="">All my merchants</option>
-            {% for m in merchants %}
-            <option value="{{ m.code }}" {% if selected_merchant == m.code %}selected{% endif %}>{{ m.display }}</option>
-            {% endfor %}
-        </select>
-        <button type="submit" class="btn btn-primary">Filter</button>
-        {% if selected_merchant %}
-        <a href="/merchant/{{ selected_merchant }}" class="btn btn-primary">View Merchant Stats</a>
-        {% endif %}
-        <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
-            <input type="text" id="manualTPN" class="input" placeholder="Enter TPN" style="width: 150px;" onkeypress="if(event.key==='Enter') viewTPN()">
+        <div class="filter-form__left">
+            {% if request.query_params.get('date_range') %}
+            <input type="hidden" name="date_range" value="{{ request.query_params.get('date_range') }}">
+            {% endif %}
+            {% if request.query_params.get('start_date') %}
+            <input type="hidden" name="start_date" value="{{ request.query_params.get('start_date') }}">
+            {% endif %}
+            {% if request.query_params.get('end_date') %}
+            <input type="hidden" name="end_date" value="{{ request.query_params.get('end_date') }}">
+            {% endif %}
+            <select name="merchant" id="merchantFilter" class="select">
+                <option value="">All my merchants</option>
+                {% for m in merchants %}
+                <option value="{{ m.code }}" {% if selected_merchant == m.code %}selected{% endif %}>{{ m.display }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary">Filter</button>
+            {% if selected_merchant %}
+            <a href="/merchant/{{ selected_merchant }}" class="btn btn-primary">View Merchant Stats</a>
+            {% endif %}
+        </div>
+        <div class="filter-form__right">
+            <input type="text" id="manualTPN" class="input" placeholder="Enter TPN" onkeypress="if(event.key==='Enter') viewTPN()">
             <button type="button" onclick="viewTPN()" class="btn btn-secondary">View TPN</button>
         </div>
     </form>
@@ -62,20 +66,22 @@
 {% else %}
 <div class="card panel section">
     <form method="get" action="/" class="filter-form">
-        {% if request.query_params.get('date_range') %}
-        <input type="hidden" name="date_range" value="{{ request.query_params.get('date_range') }}">
-        {% endif %}
-        {% if request.query_params.get('start_date') %}
-        <input type="hidden" name="start_date" value="{{ request.query_params.get('start_date') }}">
-        {% endif %}
-        {% if request.query_params.get('end_date') %}
-        <input type="hidden" name="end_date" value="{{ request.query_params.get('end_date') }}">
-        {% endif %}
-        {% if has_single_merchant and single_merchant_code %}
-        <a href="/merchant/{{ single_merchant_code }}" class="btn btn-primary">View Merchant Stats</a>
-        {% endif %}
-        <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
-            <input type="text" id="manualTPN" class="input" placeholder="Enter TPN" style="width: 150px;" onkeypress="if(event.key==='Enter') viewTPN()">
+        <div class="filter-form__left">
+            {% if request.query_params.get('date_range') %}
+            <input type="hidden" name="date_range" value="{{ request.query_params.get('date_range') }}">
+            {% endif %}
+            {% if request.query_params.get('start_date') %}
+            <input type="hidden" name="start_date" value="{{ request.query_params.get('start_date') }}">
+            {% endif %}
+            {% if request.query_params.get('end_date') %}
+            <input type="hidden" name="end_date" value="{{ request.query_params.get('end_date') }}">
+            {% endif %}
+            {% if has_single_merchant and single_merchant_code %}
+            <a href="/merchant/{{ single_merchant_code }}" class="btn btn-primary">View Merchant Stats</a>
+            {% endif %}
+        </div>
+        <div class="filter-form__right">
+            <input type="text" id="manualTPN" class="input" placeholder="Enter TPN" onkeypress="if(event.key==='Enter') viewTPN()">
             <button type="button" onclick="viewTPN()" class="btn btn-secondary">View TPN</button>
         </div>
     </form>
@@ -102,106 +108,70 @@
     <div class="analytics-card kpi-card kpi-card--offline" id="alwaysOfflineCard">
         <h3>⚠️ Always Offline</h3>
         {% if not selected_merchant and (current_user.is_admin or merchants|length > 1) %}
-        <div onclick="toggleMerchantFilter('always-offline')" style="cursor: pointer; text-align: center;">
-            <p class="kpi-value" style="color: var(--color-accent); text-align: center;">
-                {{ analytics.always_offline_today_count }}
-            </p>
-            <p class="kpi-meta" style="margin-top: 5px; text-align: center;">
-                {{ analytics.always_offline_percentage }}% of {{ analytics.total_terminals }} terminals
-            </p>
+        <div class="kpi-card__click" onclick="toggleMerchantFilter('always-offline')">
+            <p class="kpi-value">{{ analytics.always_offline_today_count }}</p>
+            <p class="kpi-meta">{{ analytics.always_offline_percentage }}% of {{ analytics.total_terminals }} terminals</p>
         </div>
-        <p class="kpi-meta" style="text-align: center;">offline/disconnect for ALL checks</p>
-        <p style="color: var(--text-muted); font-size: 12px; margin-top: 5px; text-align: center;">Click to filter by merchant</p>
+        <p class="kpi-meta">offline/disconnect for ALL checks</p>
+        <p class="kpi-meta kpi-card__hint">Click to filter by merchant</p>
         {% elif not selected_merchant %}
-        <div style="text-align: center;">
-            <p class="kpi-value" style="color: var(--color-accent); text-align: center;">
-                {{ analytics.always_offline_today_count }}
-            </p>
-            <p class="kpi-meta" style="margin-top: 5px; text-align: center;">
-                {{ analytics.always_offline_percentage }}% of {{ analytics.total_terminals }} terminals
-            </p>
+        <div>
+            <p class="kpi-value">{{ analytics.always_offline_today_count }}</p>
+            <p class="kpi-meta">{{ analytics.always_offline_percentage }}% of {{ analytics.total_terminals }} terminals</p>
         </div>
-        <p class="kpi-meta" style="text-align: center;">offline/disconnect for ALL checks</p>
+        <p class="kpi-meta">offline/disconnect for ALL checks</p>
         {% else %}
-        <div style="text-align: center;">
-            <p class="kpi-value" style="color: var(--color-accent);">
-                {{ analytics.always_offline_today_count }}
-            </p>
-            <p class="kpi-meta" style="margin-top: 5px;">
-                {{ analytics.always_offline_percentage }}% of {{ analytics.total_terminals }} terminals
-            </p>
+        <div>
+            <p class="kpi-value">{{ analytics.always_offline_today_count }}</p>
+            <p class="kpi-meta">{{ analytics.always_offline_percentage }}% of {{ analytics.total_terminals }} terminals</p>
         </div>
-        <p class="kpi-meta" style="text-align: center;">offline/disconnect for ALL checks</p>
+        <p class="kpi-meta">offline/disconnect for ALL checks</p>
         {% endif %}
     </div>
     <div class="analytics-card kpi-card kpi-card--online" id="alwaysOnlineCard">
         <h3>✅ Always Online</h3>
         {% if not selected_merchant and (current_user.is_admin or merchants|length > 1) %}
-        <div onclick="toggleMerchantFilter('always-online')" style="cursor: pointer; text-align: center;">
-            <p class="kpi-value" style="color: var(--color-primary); text-align: center;">
-                {{ analytics.always_online_today_count }}
-            </p>
-            <p class="kpi-meta" style="margin-top: 5px; text-align: center;">
-                {{ analytics.always_online_percentage }}% of {{ analytics.total_terminals }} terminals
-            </p>
+        <div class="kpi-card__click" onclick="toggleMerchantFilter('always-online')">
+            <p class="kpi-value">{{ analytics.always_online_today_count }}</p>
+            <p class="kpi-meta">{{ analytics.always_online_percentage }}% of {{ analytics.total_terminals }} terminals</p>
         </div>
-        <p class="kpi-meta" style="text-align: center;">online for ALL checks</p>
-        <p style="color: var(--text-muted); font-size: 12px; margin-top: 5px; text-align: center;">Click to filter by merchant</p>
+        <p class="kpi-meta">online for ALL checks</p>
+        <p class="kpi-meta kpi-card__hint">Click to filter by merchant</p>
         {% elif not selected_merchant %}
-        <div style="text-align: center;">
-            <p class="kpi-value" style="color: var(--color-primary); text-align: center;">
-                {{ analytics.always_online_today_count }}
-            </p>
-            <p class="kpi-meta" style="margin-top: 5px; text-align: center;">
-                {{ analytics.always_online_percentage }}% of {{ analytics.total_terminals }} terminals
-            </p>
+        <div>
+            <p class="kpi-value">{{ analytics.always_online_today_count }}</p>
+            <p class="kpi-meta">{{ analytics.always_online_percentage }}% of {{ analytics.total_terminals }} terminals</p>
         </div>
-        <p class="kpi-meta" style="text-align: center;">online for ALL checks</p>
+        <p class="kpi-meta">online for ALL checks</p>
         {% else %}
-        <div style="text-align: center;">
-            <p class="kpi-value" style="color: var(--color-primary);">
-                {{ analytics.always_online_today_count }}
-            </p>
-            <p class="kpi-meta" style="margin-top: 5px;">
-                {{ analytics.always_online_percentage }}% of {{ analytics.total_terminals }} terminals
-            </p>
+        <div>
+            <p class="kpi-value">{{ analytics.always_online_today_count }}</p>
+            <p class="kpi-meta">{{ analytics.always_online_percentage }}% of {{ analytics.total_terminals }} terminals</p>
         </div>
-        <p class="kpi-meta" style="text-align: center;">online for ALL checks</p>
+        <p class="kpi-meta">online for ALL checks</p>
         {% endif %}
     </div>
     <div class="analytics-card kpi-card kpi-card--once" id="onlineAtLeastOnceCard">
         <h3>📊 Online At Least Once</h3>
         {% if not selected_merchant and (current_user.is_admin or merchants|length > 1) %}
-        <div onclick="toggleMerchantFilter('online-once')" style="cursor: pointer; text-align: center;">
-            <p class="kpi-value" style="color: var(--color-slate); text-align: center;">
-                {{ analytics.online_at_least_once_today_count }}
-            </p>
-            <p class="kpi-meta" style="margin-top: 5px; text-align: center;">
-                {{ analytics.online_at_least_once_percentage }}% of {{ analytics.total_terminals }} terminals
-            </p>
+        <div class="kpi-card__click" onclick="toggleMerchantFilter('online-once')">
+            <p class="kpi-value">{{ analytics.online_at_least_once_today_count }}</p>
+            <p class="kpi-meta">{{ analytics.online_at_least_once_percentage }}% of {{ analytics.total_terminals }} terminals</p>
         </div>
-        <p class="kpi-meta" style="text-align: center;">were online at least once</p>
-        <p style="color: var(--text-muted); font-size: 12px; margin-top: 5px; text-align: center;">Click to filter by merchant</p>
+        <p class="kpi-meta">were online at least once</p>
+        <p class="kpi-meta kpi-card__hint">Click to filter by merchant</p>
         {% elif not selected_merchant %}
-        <div style="text-align: center;">
-            <p class="kpi-value" style="color: var(--color-slate); text-align: center;">
-                {{ analytics.online_at_least_once_today_count }}
-            </p>
-            <p class="kpi-meta" style="margin-top: 5px; text-align: center;">
-                {{ analytics.online_at_least_once_percentage }}% of {{ analytics.total_terminals }} terminals
-            </p>
+        <div>
+            <p class="kpi-value">{{ analytics.online_at_least_once_today_count }}</p>
+            <p class="kpi-meta">{{ analytics.online_at_least_once_percentage }}% of {{ analytics.total_terminals }} terminals</p>
         </div>
-        <p class="kpi-meta" style="text-align: center;">were online at least once</p>
+        <p class="kpi-meta">were online at least once</p>
         {% else %}
-        <div style="text-align: center;">
-            <p class="kpi-value" style="color: var(--color-slate);">
-                {{ analytics.online_at_least_once_today_count }}
-            </p>
-            <p class="kpi-meta" style="margin-top: 5px;">
-                {{ analytics.online_at_least_once_percentage }}% of {{ analytics.total_terminals }} terminals
-            </p>
+        <div>
+            <p class="kpi-value">{{ analytics.online_at_least_once_today_count }}</p>
+            <p class="kpi-meta">{{ analytics.online_at_least_once_percentage }}% of {{ analytics.total_terminals }} terminals</p>
         </div>
-        <p class="kpi-meta" style="text-align: center;">were online at least once</p>
+        <p class="kpi-meta">were online at least once</p>
         {% endif %}
     </div>
 </div>
@@ -488,44 +458,41 @@
         selectedCategory = category;
         
         // Determine which merchant counts and TPNs to use
-        let merchantCounts, titleText, color;
+        let merchantCounts, titleText, modifierClass;
         if (category === 'always-offline') {
             merchantCounts = alwaysOfflineMerchantCounts;
             titleText = 'Always Offline Today - Count by Merchant (Click to Filter)';
-            color = '#e74c3c';
+            modifierClass = 'merchant-filter-box--offline';
         } else if (category === 'always-online') {
             merchantCounts = alwaysOnlineMerchantCounts;
             titleText = 'Always Online Today - Count by Merchant (Click to Filter)';
-            color = '#27ae60';
+            modifierClass = 'merchant-filter-box--online';
         } else if (category === 'online-once') {
             merchantCounts = onlineAtLeastOnceMerchantCounts;
             titleText = 'Online At Least Once Today - Count by Merchant (Click to Filter)';
-            color = '#3498db';
+            modifierClass = 'merchant-filter-box--once';
         }
         
         // Update title
         titleEl.textContent = titleText;
         
-        // Build merchant filter boxes
+        // Build merchant filter boxes (classes + palette; IDs/onclick unchanged)
         if (merchantCounts && merchantCounts.length > 0) {
-            let html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px;">';
+            let html = '<div class="merchant-grid">';
             merchantCounts.forEach(merchant => {
                 html += `
                     <div onclick="filterByMerchant('${merchant.code}')" 
                          id="merchant-${merchant.code}"
-                         class="merchant-filter-box"
-                         style="padding: 6px; background: white; border-radius: 4px; border: 2px solid #ddd; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; min-height: 60px; justify-content: space-between; text-align: center;" 
-                         onmouseover="if (!this.classList.contains('selected')) { this.style.background='#f0f0f0'; this.style.borderColor='#3498db'; }" 
-                         onmouseout="if (!this.classList.contains('selected')) { this.style.background='white'; this.style.borderColor='#ddd'; }">
-                        <strong style="font-size: 12px; margin-bottom: auto;">${merchant.display}</strong>
-                        <span style="font-size: 15px; font-weight: bold; color: ${color}; margin-top: auto;">${merchant.count} terminal${merchant.count !== 1 ? 's' : ''}</span>
+                         class="merchant-filter-box ${modifierClass}">
+                        <strong>${merchant.display}</strong>
+                        <span class="merchant-filter-box__count">${merchant.count} terminal${merchant.count !== 1 ? 's' : ''}</span>
                     </div>
                 `;
             });
             html += '</div>';
             contentEl.innerHTML = html;
         } else {
-            contentEl.innerHTML = '<p style="color: #666; font-size: 14px; text-align: center; padding: 20px;">No terminals found in this category today</p>';
+            contentEl.innerHTML = '<p class="merchant-grid-empty">No terminals found in this category today</p>';
         }
         
         // Show section

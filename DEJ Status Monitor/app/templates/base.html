@@ -204,49 +204,45 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body class="app-shell">
-    {% set _version = app_version | default('1.1.3') %}
+    {% set _version = app_version | default('1.1.4') %}
     <header class="topbar">
         <div class="topbar__inner header-content">
             <div class="topbar__left header-left">
                 <a href="/" class="header-logo-link"><img src="/static/img/curbstone-logo.png" alt="Curbstone" class="logo topbar__logo"></a>
             </div>
             <div class="topbar__center header-center">
-                <h1 class="topbar__title"><a href="/" style="text-decoration: none;">Terminal Status Monitor</a></h1>
+                <h1 class="topbar__title"><a href="/">Terminal Status Monitor</a></h1>
             </div>
             <div class="topbar__right header-right">
-            <div class="topbar__actions actions">
-                {% if current_user %}
-                <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end;">
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <span class="topbar__meta" style="margin-right: 10px;">
+                <div class="topbar__actions actions">
+                    {% if current_user %}
+                    <div class="topbar__userrow">
+                        <span class="topbar__meta topbar__email">
                             {{ current_user.email }}
                             {% if current_user.is_admin %}<span class="admin-badge">(Admin)</span>{% endif %}
                         </span>
                         {% if current_user.is_admin %}
-                        <a href="/admin/users" class="btn btn-primary" style="background: #c97c5d; padding: 8px 16px; font-size: 13px;">Manage Users</a>
+                        <a href="/admin/users" class="btn btn-primary topbar__btn-admin">Manage Users</a>
                         {% endif %}
-                        <a href="/change-password" class="btn btn-secondary secondary" style="padding: 8px 16px; font-size: 13px;">Change password</a>
-                        <a href="/logout" class="btn btn-secondary secondary" style="padding: 8px 16px; font-size: 13px;">Logout</a>
+                        <a href="/change-password" class="btn btn-secondary secondary">Change password</a>
+                        <a href="/logout" class="btn btn-secondary secondary">Logout</a>
                     </div>
                     {% if current_user.is_admin %}
-                    <div style="display: flex; gap: 10px;">
+                    <div class="topbar__adminrow">
                         <button onclick="runCheck()" class="btn btn-primary">Run Check Now</button>
                         <button onclick="reloadTPNs()" class="btn btn-secondary secondary">Reload TPNs</button>
                     </div>
                     {% endif %}
-                    <span id="nextCheckCountdown" class="topbar__meta" style="text-align: right;">
-                        Loading...
-                    </span>
+                    <span id="nextCheckCountdown" class="topbar__meta topbar__countdown">Loading...</span>
                     {% if current_user.is_admin %}
-                    <div id="terminalCounts" class="topbar__meta" style="text-align: right; margin-top: 5px;">
+                    <div id="terminalCounts" class="topbar__meta topbar__counts">
                         <div>Steam Terminals: <span id="steamCount">-</span></div>
                     </div>
                     {% endif %}
-                </div>
                 {% else %}
-                <a href="/login" class="btn btn-primary">Login</a>
+                    <a href="/login" class="btn btn-primary">Login</a>
                 {% endif %}
-            </div>
+                </div>
             </div>
         </div>
     </header>
