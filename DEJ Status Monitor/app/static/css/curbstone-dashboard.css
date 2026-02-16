@@ -101,7 +101,7 @@ body {
 
 .topbar .topbar__logo,
 .topbar .logo {
-  height: 64px;
+  height: 128px;
   width: auto;
   display: block;
   object-fit: contain;
