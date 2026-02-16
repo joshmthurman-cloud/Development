@@ -58,12 +58,14 @@ function KpiCard({ label, value, sub }: { label: string; value: string | number;
 function InfoTip({ text }: { text: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <span className="relative inline-flex">
+    <span
+      className="relative inline-flex"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
         className="inline-flex items-center justify-center w-[14px] h-[14px] rounded-full text-[9px] font-bold cursor-help shrink-0 select-none"
         style={{ background: "rgba(255,255,255,0.08)", color: T.textMuted }}
       >

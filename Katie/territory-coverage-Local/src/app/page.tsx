@@ -467,9 +467,9 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="flex min-h-0">
+        <div className="flex flex-1 min-h-0">
           {/* Left rail: fixed on lg, drawer on small */}
-          <div className="hidden lg:block lg:overflow-auto" style={{ maxHeight: "calc(100vh - 108px)" }}>
+          <div className="hidden lg:block">
             <VPLeftRail
               groups={groups}
               selectedGroupIds={selectedGroupIds}
@@ -508,10 +508,10 @@ export default function DashboardPage() {
           <div className="flex-1 flex flex-col min-w-0">
             <VPMapHeaderStrip regionCount={regionCount} dateRange={dateRange} />
 
-            {/* Map canvas — fixed height so page can scroll */}
+            {/* Map canvas */}
             <div
-              className="relative"
-              style={{ height: "clamp(360px, 55vh, 560px)", borderBottom: `1px solid ${T.rowBorder}` }}
+              className="flex-1 min-h-[300px] md:min-h-[420px] relative"
+              style={{ borderBottom: `1px solid ${T.rowBorder}` }}
             >
               <TerritoryMap
                 mode={mode}
