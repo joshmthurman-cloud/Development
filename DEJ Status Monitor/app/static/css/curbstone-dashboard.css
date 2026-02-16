@@ -1,0 +1,527 @@
+/**
+ * Curbstone Dashboard - Enterprise style guide
+ * Tokens and components for Terminal Status Monitor
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Brand palette */
+  --color-primary: #5693b3;
+  --color-primary-hover: #47819e;
+  --color-light: #bfd1e5;
+  --color-light-hover: #a8bfdb;
+  --color-accent: #c97c5d;
+  --color-accent-hover: #b56a4d;
+  --color-slate: #474954;
+  --color-slate-muted: #5c5e6b;
+
+  /* Semantic */
+  --color-online: #5693b3;
+  --color-offline: #c97c5d;
+  --color-unknown: #474954;
+
+  /* Surfaces */
+  --bg-page: #f6f8fb;
+  --bg-card: #ffffff;
+  --bg-topbar: #474954;
+  --border-subtle: rgba(71, 73, 84, 0.12);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --text-body: var(--color-slate);
+  --text-muted: #6b7280;
+  --text-inverse: #ffffff;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 40px;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+
+  /* Focus */
+  --focus-ring: 0 0 0 2px var(--color-primary);
+}
+
+/* ---- Base ---- */
+body {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  background: var(--bg-page);
+  color: var(--text-body);
+  line-height: 1.6;
+}
+
+/* ---- App shell ---- */
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-md);
+  flex: 1;
+}
+
+/* ---- Topbar (dark header) ---- */
+.topbar {
+  background: var(--bg-topbar);
+  color: var(--text-inverse);
+  padding: var(--space-md) 0;
+  margin-bottom: var(--space-xl);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.topbar__inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.topbar__left { flex-shrink: 0; }
+.topbar__center { flex: 1; display: flex; justify-content: center; align-items: center; }
+.topbar__right { flex-shrink: 0; }
+
+.topbar .topbar__logo,
+.topbar .logo {
+  height: 48px;
+  display: block;
+}
+
+.topbar__title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.topbar__title a {
+  color: var(--text-inverse) !important;
+  text-decoration: none;
+}
+
+.topbar__title a:hover {
+  color: var(--color-light) !important;
+}
+
+.topbar__actions {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.topbar__meta {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.topbar__meta .admin-badge {
+  color: var(--color-accent);
+}
+
+/* ---- Buttons ---- */
+.btn,
+button.btn {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.btn:focus-visible,
+button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.btn-primary,
+.btn {
+  background: var(--color-primary);
+  color: var(--text-inverse);
+}
+
+.btn-primary:hover,
+.btn:hover {
+  background: var(--color-primary-hover);
+}
+
+.btn-secondary,
+button.secondary {
+  background: transparent;
+  color: var(--color-slate);
+  border: 2px solid var(--color-light);
+}
+
+.btn-secondary:hover,
+button.secondary:hover {
+  background: rgba(191, 209, 229, 0.3);
+  border-color: var(--color-light-hover);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-slate);
+}
+
+.btn-ghost:hover {
+  background: rgba(71, 73, 84, 0.08);
+}
+
+/* Admin accent button (Manage Users) */
+a.btn[style*="background: #c97c5d"],
+a.btn[style*="background:#c97c5d"] {
+  background: var(--color-accent) !important;
+}
+a.btn[style*="background: #c97c5d"]:hover,
+a.btn[style*="background:#c97c5d"]:hover {
+  background: var(--color-accent-hover) !important;
+}
+
+/* View Merchant Stats green -> primary */
+a.btn[style*="background: #27ae60"],
+a.btn[style*="background:#27ae60"] {
+  background: var(--color-primary) !important;
+}
+
+/* ---- Inputs & selects ---- */
+.input,
+.select,
+input[type="text"],
+input[type="date"],
+select {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  color: var(--text-body);
+  min-height: 40px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(86, 147, 179, 0.2);
+}
+
+.select,
+select {
+  min-width: 200px;
+  cursor: pointer;
+}
+
+/* ---- Cards & panels ---- */
+.card,
+.panel {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-subtle);
+}
+
+.panel__header {
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.section {
+  margin-bottom: var(--space-2xl);
+}
+
+.section__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-slate);
+  margin-bottom: var(--space-xs);
+}
+
+.section__subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* ---- KPI cards ---- */
+.analytics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+.kpi-card,
+.analytics-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-subtle);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.kpi-card:hover,
+.analytics-card:hover {
+  box-shadow: var(--shadow-card-hover);
+}
+
+.kpi-card::before,
+.analytics-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--color-primary);
+}
+
+.kpi-card--offline::before,
+#alwaysOfflineCard::before { background: var(--color-accent); }
+
+.kpi-card--online::before,
+#alwaysOnlineCard::before { background: var(--color-primary); }
+
+.kpi-card--once::before,
+#onlineAtLeastOnceCard::before { background: var(--color-light); }
+
+.kpi-card h3,
+.analytics-card h3 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-slate);
+  margin-bottom: var(--space-sm);
+}
+
+.kpi-card .kpi-value,
+.analytics-card .kpi-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+  margin: var(--space-sm) 0;
+}
+
+.kpi-card .kpi-meta,
+.analytics-card .kpi-meta {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Online At Least Once: ensure text is readable on light bar */
+#onlineAtLeastOnceCard .kpi-value,
+#onlineAtLeastOnceCard p {
+  color: var(--color-slate);
+}
+
+/* ---- Status badges (pills) ---- */
+.status,
+.badge {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.status.ONLINE,
+.badge--online {
+  background: rgba(86, 147, 179, 0.14);
+  color: var(--color-online);
+}
+
+.status.OFFLINE,
+.status.DISCONNECT,
+.badge--offline {
+  background: rgba(201, 124, 93, 0.14);
+  color: var(--color-offline);
+}
+
+.status.ERROR,
+.status.UNKNOWN,
+.badge--unknown {
+  background: rgba(71, 73, 84, 0.12);
+  color: var(--color-unknown);
+}
+
+/* ---- Table (modern) ---- */
+.table--modern,
+#terminalsTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-card);
+  font-size: 0.875rem;
+}
+
+.table--modern thead,
+#terminalsTable thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-card);
+  border-bottom: 2px solid var(--border-subtle);
+  box-shadow: 0 2px 0 var(--border-subtle);
+}
+
+.table--modern th,
+#terminalsTable th {
+  padding: 14px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-slate);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  user-select: none;
+}
+
+.table--modern th:hover,
+#terminalsTable th:hover {
+  background: rgba(71, 73, 84, 0.04);
+}
+
+.table--modern td,
+#terminalsTable td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-body);
+}
+
+.table--modern tbody tr,
+#terminalsTable tbody tr {
+  transition: background 0.12s;
+  cursor: pointer;
+}
+
+.table--modern tbody tr:hover,
+#terminalsTable tbody tr:hover {
+  background: rgba(86, 147, 179, 0.06);
+}
+
+.time-ago {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+/* ---- Merchant filter panel ---- */
+#merchantFilterSection .card,
+#merchantFilterSection .panel {
+  padding: var(--space-md);
+}
+
+#filterSectionTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-slate);
+  margin-bottom: var(--space-sm);
+}
+
+.merchant-filter-box {
+  padding: var(--space-sm);
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border-subtle);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.merchant-filter-box:hover {
+  background: rgba(86, 147, 179, 0.06);
+  border-color: var(--color-primary);
+}
+
+.merchant-filter-box.selected {
+  background: rgba(86, 147, 179, 0.14);
+  border-color: var(--color-primary);
+}
+
+/* ---- Date range bar ---- */
+.date-range-bar {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.date-range-btn {
+  font-size: 0.8125rem !important;
+  padding: 8px 14px !important;
+}
+
+/* ---- Footer ---- */
+.app-footer {
+  margin-top: var(--space-2xl);
+  padding: var(--space-md) var(--space-lg);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+}
+
+/* ---- Links ---- */
+.back-link {
+  display: inline-block;
+  margin-bottom: var(--space-lg);
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.back-link:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+/* Terminal link in table */
+a[href^="/terminal/"] {
+  color: var(--color-primary);
+}
+a[href^="/terminal/"]:hover {
+  color: var(--color-primary-hover);
+}
+
+/* ---- Utility: ensure filter form layout ---- */
+.filter-form {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-form .select { min-width: 280px; }

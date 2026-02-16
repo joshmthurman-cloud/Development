@@ -2,9 +2,9 @@
 
 {% block content %}
 {% if current_user.is_admin %}
-<div class="card" style="margin-bottom: 20px;">
-    <h2>Filter by Merchant</h2>
-    <form method="get" action="/" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+<div class="card panel section">
+    <h2 class="section__title">Filter by Merchant</h2>
+    <form method="get" action="/" class="filter-form">
         {% if request.query_params.get('date_range') %}
         <input type="hidden" name="date_range" value="{{ request.query_params.get('date_range') }}">
         {% endif %}
@@ -14,26 +14,26 @@
         {% if request.query_params.get('end_date') %}
         <input type="hidden" name="end_date" value="{{ request.query_params.get('end_date') }}">
         {% endif %}
-        <select name="merchant" id="merchantFilter" style="padding: 8px; font-size: 14px; min-width: 300px;">
+        <select name="merchant" id="merchantFilter" class="select">
             <option value="">All Merchants</option>
             {% for m in merchants %}
             <option value="{{ m.code }}" {% if selected_merchant == m.code %}selected{% endif %}>{{ m.display }}</option>
             {% endfor %}
         </select>
-        <button type="submit" class="btn">Filter</button>
+        <button type="submit" class="btn btn-primary">Filter</button>
         {% if selected_merchant %}
-        <a href="/merchant/{{ selected_merchant }}" class="btn" style="background: #27ae60;">View Merchant Stats</a>
+        <a href="/merchant/{{ selected_merchant }}" class="btn btn-primary">View Merchant Stats</a>
         {% endif %}
         <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
-            <input type="text" id="manualTPN" placeholder="Enter TPN" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; width: 150px;" onkeypress="if(event.key==='Enter') viewTPN()">
-            <button type="button" onclick="viewTPN()" class="btn secondary">View TPN</button>
+            <input type="text" id="manualTPN" class="input" placeholder="Enter TPN" style="width: 150px;" onkeypress="if(event.key==='Enter') viewTPN()">
+            <button type="button" onclick="viewTPN()" class="btn btn-secondary">View TPN</button>
         </div>
     </form>
 </div>
 {% elif merchants|length > 1 %}
-<div class="card" style="margin-bottom: 20px;">
-    <h2>Filter by Merchant</h2>
-    <form method="get" action="/" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+<div class="card panel section">
+    <h2 class="section__title">Filter by Merchant</h2>
+    <form method="get" action="/" class="filter-form">
         {% if request.query_params.get('date_range') %}
         <input type="hidden" name="date_range" value="{{ request.query_params.get('date_range') }}">
         {% endif %}
@@ -43,25 +43,25 @@
         {% if request.query_params.get('end_date') %}
         <input type="hidden" name="end_date" value="{{ request.query_params.get('end_date') }}">
         {% endif %}
-        <select name="merchant" id="merchantFilter" style="padding: 8px; font-size: 14px; min-width: 300px;">
+        <select name="merchant" id="merchantFilter" class="select">
             <option value="">All my merchants</option>
             {% for m in merchants %}
             <option value="{{ m.code }}" {% if selected_merchant == m.code %}selected{% endif %}>{{ m.display }}</option>
             {% endfor %}
         </select>
-        <button type="submit" class="btn">Filter</button>
+        <button type="submit" class="btn btn-primary">Filter</button>
         {% if selected_merchant %}
-        <a href="/merchant/{{ selected_merchant }}" class="btn" style="background: #27ae60;">View Merchant Stats</a>
+        <a href="/merchant/{{ selected_merchant }}" class="btn btn-primary">View Merchant Stats</a>
         {% endif %}
         <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
-            <input type="text" id="manualTPN" placeholder="Enter TPN" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; width: 150px;" onkeypress="if(event.key==='Enter') viewTPN()">
-            <button type="button" onclick="viewTPN()" class="btn secondary">View TPN</button>
+            <input type="text" id="manualTPN" class="input" placeholder="Enter TPN" style="width: 150px;" onkeypress="if(event.key==='Enter') viewTPN()">
+            <button type="button" onclick="viewTPN()" class="btn btn-secondary">View TPN</button>
         </div>
     </form>
 </div>
 {% else %}
-<div class="card" style="margin-bottom: 20px;">
-    <form method="get" action="/" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+<div class="card panel section">
+    <form method="get" action="/" class="filter-form">
         {% if request.query_params.get('date_range') %}
         <input type="hidden" name="date_range" value="{{ request.query_params.get('date_range') }}">
         {% endif %}
@@ -72,157 +72,157 @@
         <input type="hidden" name="end_date" value="{{ request.query_params.get('end_date') }}">
         {% endif %}
         {% if has_single_merchant and single_merchant_code %}
-        <a href="/merchant/{{ single_merchant_code }}" class="btn" style="background: #27ae60;">View Merchant Stats</a>
+        <a href="/merchant/{{ single_merchant_code }}" class="btn btn-primary">View Merchant Stats</a>
         {% endif %}
         <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
-            <input type="text" id="manualTPN" placeholder="Enter TPN" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; width: 150px;" onkeypress="if(event.key==='Enter') viewTPN()">
-            <button type="button" onclick="viewTPN()" class="btn secondary">View TPN</button>
+            <input type="text" id="manualTPN" class="input" placeholder="Enter TPN" style="width: 150px;" onkeypress="if(event.key==='Enter') viewTPN()">
+            <button type="button" onclick="viewTPN()" class="btn btn-secondary">View TPN</button>
         </div>
     </form>
 </div>
 {% endif %}
 
-<div class="card" style="margin-bottom: 20px;">
-    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-        <strong>Date Range:</strong>
-        <button onclick="setDateRange('today')" id="btn-today" class="btn date-range-btn" style="font-size: 12px; padding: 6px 12px;">Today</button>
-        <button onclick="setDateRange('week')" id="btn-week" class="btn secondary date-range-btn" style="font-size: 12px; padding: 6px 12px;">1 Week</button>
-        <button onclick="setDateRange('month')" id="btn-month" class="btn secondary date-range-btn" style="font-size: 12px; padding: 6px 12px;">1 Month</button>
-        <button onclick="showDateRangePicker()" id="btn-custom" class="btn secondary date-range-btn" style="font-size: 12px; padding: 6px 12px;">Date Range</button>
+<div class="card panel section">
+    <div class="date-range-bar">
+        <strong class="section__subtitle" style="margin: 0;">Date Range:</strong>
+        <button onclick="setDateRange('today')" id="btn-today" class="btn btn-primary date-range-btn">Today</button>
+        <button onclick="setDateRange('week')" id="btn-week" class="btn btn-secondary secondary date-range-btn">1 Week</button>
+        <button onclick="setDateRange('month')" id="btn-month" class="btn btn-secondary secondary date-range-btn">1 Month</button>
+        <button onclick="showDateRangePicker()" id="btn-custom" class="btn btn-secondary secondary date-range-btn">Date Range</button>
         <div id="customDateRange" style="display: none; margin-left: 10px;">
-            <input type="date" id="startDate" style="padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+            <input type="date" id="startDate" class="input">
             <span style="margin: 0 5px;">to</span>
-            <input type="date" id="endDate" style="padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
-            <button onclick="applyCustomDateRange()" class="btn" style="font-size: 12px; padding: 6px 12px; margin-left: 5px;">Apply</button>
+            <input type="date" id="endDate" class="input">
+            <button onclick="applyCustomDateRange()" class="btn btn-primary date-range-btn" style="margin-left: 5px;">Apply</button>
         </div>
     </div>
 </div>
 
 <div class="analytics">
-    <div class="analytics-card" id="alwaysOfflineCard">
+    <div class="analytics-card kpi-card kpi-card--offline" id="alwaysOfflineCard">
         <h3>⚠️ Always Offline</h3>
         {% if not selected_merchant and (current_user.is_admin or merchants|length > 1) %}
         <div onclick="toggleMerchantFilter('always-offline')" style="cursor: pointer; text-align: center;">
-            <p style="font-size: 48px; font-weight: bold; color: #e74c3c; margin: 10px 0; text-align: center;">
+            <p class="kpi-value" style="color: var(--color-accent); text-align: center;">
                 {{ analytics.always_offline_today_count }}
             </p>
-            <p style="font-size: 14px; color: #666; margin-top: 5px;">
+            <p class="kpi-meta" style="margin-top: 5px; text-align: center;">
                 {{ analytics.always_offline_percentage }}% of {{ analytics.total_terminals }} terminals
             </p>
         </div>
-        <p style="color: #666; font-size: 14px; text-align: center;">offline/disconnect for ALL checks</p>
-        <p style="color: #999; font-size: 12px; margin-top: 5px; text-align: center;">Click to filter by merchant</p>
+        <p class="kpi-meta" style="text-align: center;">offline/disconnect for ALL checks</p>
+        <p style="color: var(--text-muted); font-size: 12px; margin-top: 5px; text-align: center;">Click to filter by merchant</p>
         {% elif not selected_merchant %}
         <div style="text-align: center;">
-            <p style="font-size: 48px; font-weight: bold; color: #e74c3c; margin: 10px 0; text-align: center;">
+            <p class="kpi-value" style="color: var(--color-accent); text-align: center;">
                 {{ analytics.always_offline_today_count }}
             </p>
-            <p style="font-size: 14px; color: #666; margin-top: 5px;">
+            <p class="kpi-meta" style="margin-top: 5px; text-align: center;">
                 {{ analytics.always_offline_percentage }}% of {{ analytics.total_terminals }} terminals
             </p>
         </div>
-        <p style="color: #666; font-size: 14px; text-align: center;">offline/disconnect for ALL checks</p>
+        <p class="kpi-meta" style="text-align: center;">offline/disconnect for ALL checks</p>
         {% else %}
         <div style="text-align: center;">
-            <p style="font-size: 48px; font-weight: bold; color: #e74c3c; margin: 10px 0;">
+            <p class="kpi-value" style="color: var(--color-accent);">
                 {{ analytics.always_offline_today_count }}
             </p>
-            <p style="font-size: 14px; color: #666; margin-top: 5px;">
+            <p class="kpi-meta" style="margin-top: 5px;">
                 {{ analytics.always_offline_percentage }}% of {{ analytics.total_terminals }} terminals
             </p>
         </div>
-        <p style="color: #666; font-size: 14px; text-align: center;">offline/disconnect for ALL checks</p>
+        <p class="kpi-meta" style="text-align: center;">offline/disconnect for ALL checks</p>
         {% endif %}
     </div>
-    <div class="analytics-card" id="alwaysOnlineCard">
+    <div class="analytics-card kpi-card kpi-card--online" id="alwaysOnlineCard">
         <h3>✅ Always Online</h3>
         {% if not selected_merchant and (current_user.is_admin or merchants|length > 1) %}
         <div onclick="toggleMerchantFilter('always-online')" style="cursor: pointer; text-align: center;">
-            <p style="font-size: 48px; font-weight: bold; color: #27ae60; margin: 10px 0; text-align: center;">
+            <p class="kpi-value" style="color: var(--color-primary); text-align: center;">
                 {{ analytics.always_online_today_count }}
             </p>
-            <p style="font-size: 14px; color: #666; margin-top: 5px;">
+            <p class="kpi-meta" style="margin-top: 5px; text-align: center;">
                 {{ analytics.always_online_percentage }}% of {{ analytics.total_terminals }} terminals
             </p>
         </div>
-        <p style="color: #666; font-size: 14px; text-align: center;">online for ALL checks</p>
-        <p style="color: #999; font-size: 12px; margin-top: 5px; text-align: center;">Click to filter by merchant</p>
+        <p class="kpi-meta" style="text-align: center;">online for ALL checks</p>
+        <p style="color: var(--text-muted); font-size: 12px; margin-top: 5px; text-align: center;">Click to filter by merchant</p>
         {% elif not selected_merchant %}
         <div style="text-align: center;">
-            <p style="font-size: 48px; font-weight: bold; color: #27ae60; margin: 10px 0; text-align: center;">
+            <p class="kpi-value" style="color: var(--color-primary); text-align: center;">
                 {{ analytics.always_online_today_count }}
             </p>
-            <p style="font-size: 14px; color: #666; margin-top: 5px;">
+            <p class="kpi-meta" style="margin-top: 5px; text-align: center;">
                 {{ analytics.always_online_percentage }}% of {{ analytics.total_terminals }} terminals
             </p>
         </div>
-        <p style="color: #666; font-size: 14px; text-align: center;">online for ALL checks</p>
+        <p class="kpi-meta" style="text-align: center;">online for ALL checks</p>
         {% else %}
         <div style="text-align: center;">
-            <p style="font-size: 48px; font-weight: bold; color: #27ae60; margin: 10px 0;">
+            <p class="kpi-value" style="color: var(--color-primary);">
                 {{ analytics.always_online_today_count }}
             </p>
-            <p style="font-size: 14px; color: #666; margin-top: 5px;">
+            <p class="kpi-meta" style="margin-top: 5px;">
                 {{ analytics.always_online_percentage }}% of {{ analytics.total_terminals }} terminals
             </p>
         </div>
-        <p style="color: #666; font-size: 14px; text-align: center;">online for ALL checks</p>
+        <p class="kpi-meta" style="text-align: center;">online for ALL checks</p>
         {% endif %}
     </div>
-    <div class="analytics-card" id="onlineAtLeastOnceCard">
+    <div class="analytics-card kpi-card kpi-card--once" id="onlineAtLeastOnceCard">
         <h3>📊 Online At Least Once</h3>
         {% if not selected_merchant and (current_user.is_admin or merchants|length > 1) %}
         <div onclick="toggleMerchantFilter('online-once')" style="cursor: pointer; text-align: center;">
-            <p style="font-size: 48px; font-weight: bold; color: #3498db; margin: 10px 0; text-align: center;">
+            <p class="kpi-value" style="color: var(--color-slate); text-align: center;">
                 {{ analytics.online_at_least_once_today_count }}
             </p>
-            <p style="font-size: 14px; color: #666; margin-top: 5px;">
+            <p class="kpi-meta" style="margin-top: 5px; text-align: center;">
                 {{ analytics.online_at_least_once_percentage }}% of {{ analytics.total_terminals }} terminals
             </p>
         </div>
-        <p style="color: #666; font-size: 14px; text-align: center;">were online at least once</p>
-        <p style="color: #999; font-size: 12px; margin-top: 5px; text-align: center;">Click to filter by merchant</p>
+        <p class="kpi-meta" style="text-align: center;">were online at least once</p>
+        <p style="color: var(--text-muted); font-size: 12px; margin-top: 5px; text-align: center;">Click to filter by merchant</p>
         {% elif not selected_merchant %}
         <div style="text-align: center;">
-            <p style="font-size: 48px; font-weight: bold; color: #3498db; margin: 10px 0; text-align: center;">
+            <p class="kpi-value" style="color: var(--color-slate); text-align: center;">
                 {{ analytics.online_at_least_once_today_count }}
             </p>
-            <p style="font-size: 14px; color: #666; margin-top: 5px;">
+            <p class="kpi-meta" style="margin-top: 5px; text-align: center;">
                 {{ analytics.online_at_least_once_percentage }}% of {{ analytics.total_terminals }} terminals
             </p>
         </div>
-        <p style="color: #666; font-size: 14px; text-align: center;">were online at least once</p>
+        <p class="kpi-meta" style="text-align: center;">were online at least once</p>
         {% else %}
         <div style="text-align: center;">
-            <p style="font-size: 48px; font-weight: bold; color: #3498db; margin: 10px 0;">
+            <p class="kpi-value" style="color: var(--color-slate);">
                 {{ analytics.online_at_least_once_today_count }}
             </p>
-            <p style="font-size: 14px; color: #666; margin-top: 5px;">
+            <p class="kpi-meta" style="margin-top: 5px;">
                 {{ analytics.online_at_least_once_percentage }}% of {{ analytics.total_terminals }} terminals
             </p>
         </div>
-        <p style="color: #666; font-size: 14px; text-align: center;">were online at least once</p>
+        <p class="kpi-meta" style="text-align: center;">were online at least once</p>
         {% endif %}
     </div>
 </div>
 
 {% if not selected_merchant and (current_user.is_admin or merchants|length > 1) %}
-<div id="merchantFilterSection" style="display: none; margin-bottom: 20px;">
-    <div class="card" style="padding: 12px;">
-        <h3 id="filterSectionTitle" style="margin-bottom: 8px; font-size: 14px;">Count by Merchant (Click to Filter)</h3>
+<div id="merchantFilterSection" class="section" style="display: none; margin-bottom: 20px;">
+    <div class="card panel">
+        <h3 id="filterSectionTitle" class="panel__header">Count by Merchant (Click to Filter)</h3>
         <div id="merchantFilterContent">
             <!-- Content will be populated by JavaScript -->
         </div>
         <div id="clearFilterBtn" style="display: none; margin-top: 8px; text-align: center;">
-            <button onclick="clearMerchantFilter()" class="btn secondary" style="font-size: 12px; padding: 6px 12px;">Clear Merchant Filter</button>
+            <button onclick="clearMerchantFilter()" class="btn btn-secondary">Clear Merchant Filter</button>
         </div>
     </div>
 </div>
 {% endif %}
 
-<div class="card">
-    <h2>All Terminals</h2>
-    <table id="terminalsTable">
+<div class="card panel section">
+    <h2 class="section__title">All Terminals</h2>
+    <table id="terminalsTable" class="table--modern">
         <thead>
             <tr>
                 <th onclick="sortTable(0)">TPN ↕</th>
@@ -541,15 +541,15 @@
         // Update UI - highlight selected merchant
         document.querySelectorAll('.merchant-filter-box').forEach(box => {
             box.classList.remove('selected');
-            box.style.background = 'white';
-            box.style.borderColor = '#ddd';
+            box.style.background = '';
+            box.style.borderColor = '';
         });
         
         const selectedBox = document.getElementById('merchant-' + merchantCode);
         if (selectedBox) {
             selectedBox.classList.add('selected');
-            selectedBox.style.background = '#d4edda';
-            selectedBox.style.borderColor = '#28a745';
+            selectedBox.style.background = '';
+            selectedBox.style.borderColor = '';
         }
         
         // Show clear filter button
@@ -624,8 +624,8 @@
         // Reset UI
         document.querySelectorAll('.merchant-filter-box').forEach(box => {
             box.classList.remove('selected');
-            box.style.background = 'white';
-            box.style.borderColor = '#ddd';
+            box.style.background = '';
+            box.style.borderColor = '';
         });
         
         document.getElementById('clearFilterBtn').style.display = 'none';
