@@ -101,7 +101,7 @@
 <div class="analytics">
     <div class="analytics-card" id="alwaysOfflineCard">
         <h3>⚠️ Always Offline</h3>
-        {% if not selected_merchant and current_user.is_admin and not has_single_merchant %}
+        {% if not selected_merchant and (current_user.is_admin or merchants|length > 1) %}
         <div onclick="toggleMerchantFilter('always-offline')" style="cursor: pointer; text-align: center;">
             <p style="font-size: 48px; font-weight: bold; color: #e74c3c; margin: 10px 0; text-align: center;">
                 {{ analytics.always_offline_today_count }}
@@ -112,7 +112,7 @@
         </div>
         <p style="color: #666; font-size: 14px; text-align: center;">offline/disconnect for ALL checks</p>
         <p style="color: #999; font-size: 12px; margin-top: 5px; text-align: center;">Click to filter by merchant</p>
-        {% elif not selected_merchant and (not current_user.is_admin or has_single_merchant) %}
+        {% elif not selected_merchant %}
         <div style="text-align: center;">
             <p style="font-size: 48px; font-weight: bold; color: #e74c3c; margin: 10px 0; text-align: center;">
                 {{ analytics.always_offline_today_count }}
@@ -136,7 +136,7 @@
     </div>
     <div class="analytics-card" id="alwaysOnlineCard">
         <h3>✅ Always Online</h3>
-        {% if not selected_merchant and current_user.is_admin and not has_single_merchant %}
+        {% if not selected_merchant and (current_user.is_admin or merchants|length > 1) %}
         <div onclick="toggleMerchantFilter('always-online')" style="cursor: pointer; text-align: center;">
             <p style="font-size: 48px; font-weight: bold; color: #27ae60; margin: 10px 0; text-align: center;">
                 {{ analytics.always_online_today_count }}
@@ -147,7 +147,7 @@
         </div>
         <p style="color: #666; font-size: 14px; text-align: center;">online for ALL checks</p>
         <p style="color: #999; font-size: 12px; margin-top: 5px; text-align: center;">Click to filter by merchant</p>
-        {% elif not selected_merchant and (not current_user.is_admin or has_single_merchant) %}
+        {% elif not selected_merchant %}
         <div style="text-align: center;">
             <p style="font-size: 48px; font-weight: bold; color: #27ae60; margin: 10px 0; text-align: center;">
                 {{ analytics.always_online_today_count }}
@@ -171,7 +171,7 @@
     </div>
     <div class="analytics-card" id="onlineAtLeastOnceCard">
         <h3>📊 Online At Least Once</h3>
-        {% if not selected_merchant and current_user.is_admin and not has_single_merchant %}
+        {% if not selected_merchant and (current_user.is_admin or merchants|length > 1) %}
         <div onclick="toggleMerchantFilter('online-once')" style="cursor: pointer; text-align: center;">
             <p style="font-size: 48px; font-weight: bold; color: #3498db; margin: 10px 0; text-align: center;">
                 {{ analytics.online_at_least_once_today_count }}
@@ -182,7 +182,7 @@
         </div>
         <p style="color: #666; font-size: 14px; text-align: center;">were online at least once</p>
         <p style="color: #999; font-size: 12px; margin-top: 5px; text-align: center;">Click to filter by merchant</p>
-        {% elif not selected_merchant and (not current_user.is_admin or has_single_merchant) %}
+        {% elif not selected_merchant %}
         <div style="text-align: center;">
             <p style="font-size: 48px; font-weight: bold; color: #3498db; margin: 10px 0; text-align: center;">
                 {{ analytics.online_at_least_once_today_count }}
@@ -206,7 +206,7 @@
     </div>
 </div>
 
-{% if not selected_merchant and current_user.is_admin and not has_single_merchant %}
+{% if not selected_merchant and (current_user.is_admin or merchants|length > 1) %}
 <div id="merchantFilterSection" style="display: none; margin-bottom: 20px;">
     <div class="card" style="padding: 12px;">
         <h3 id="filterSectionTitle" style="margin-bottom: 8px; font-size: 14px;">Count by Merchant (Click to Filter)</h3>
