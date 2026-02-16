@@ -20,16 +20,20 @@ model Group {
   name               String  @unique
   colorHex           String
   servicesWholeState Boolean @default(true)
+  workGroupAccount   String?
   reps               Rep[]
 }
 
 model Rep {
-  id          String      @id @default(cuid())
-  name        String
-  groupId     String
-  group       Group       @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  repColorHex String?
-  territories Territory[]
+  id                   String      @id @default(cuid())
+  name                 String
+  groupId              String
+  group                Group       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  repColorHex          String?
+  totalAmountOfSales  Float?
+  numberOfDealers      Int?
+  housingMarketShare   Float?
+  territories          Territory[]
 
   @@unique([groupId, name])
 }

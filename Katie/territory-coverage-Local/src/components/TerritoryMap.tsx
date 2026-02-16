@@ -32,8 +32,10 @@ interface TerritoryMapProps {
   overlapStates: Set<string>;
   overlapCounties?: Set<string>;
   selectedState?: string | null;
+  zoomToStateTrigger?: number;
   onHover?: (state: string | null, data: TerritoryData | null) => void;
   onStateClick?: (stateAbbr: string, data: TerritoryData | null) => void;
+  onClearState?: () => void;
 }
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -44,10 +46,8 @@ function hexToRgb(hex: string): [number, number, number] {
 const TILE_SIZE = 256;
 const PERIOD = 32;
 const STRIPE_WIDTH = 20;
-const GAP_WIDTH = 12;
 const STRIPE_ALPHA = 160;
 
-/** Stable hash for overlap pattern id so we can remove/replace when colors change. */
 function overlapPatternId(colors: string[]): string {
   const key = [...colors].sort().map((c) => c.replace(/^#/, "")).join("");
   let h = 5381;
@@ -55,11 +55,6 @@ function overlapPatternId(colors: string[]): string {
   return "overlap-" + (h >>> 0).toString(36);
 }
 
-/**
- * Seamless barber-pole overlap pattern. Tile 256x256, period divides tile (no seams).
- * One diagonal: band = (x - y) % period, inStripe = band < stripeWidth.
- * If >4 colors: two-color only (base + one stripe). Otherwise cycle colors[1..] over base colors[0].
- */
 function createOverlapPattern(colors: string[]): { width: number; height: number; data: Uint8Array } {
   const data = new Uint8Array(TILE_SIZE * TILE_SIZE * 4);
   const stripeColors =
@@ -81,11 +76,6 @@ function createOverlapPattern(colors: string[]): { width: number; height: number
         data[i + 1] = g;
         data[i + 2] = b;
         data[i + 3] = STRIPE_ALPHA;
-      } else {
-        data[i] = 0;
-        data[i + 1] = 0;
-        data[i + 2] = 0;
-        data[i + 3] = 0;
       }
     }
   }
@@ -203,11 +193,10 @@ function transformGeometryScale2(
   };
 }
 
-// Alaska: scale down, place west of California. Hawaii: scale slightly, place below CA.
 const AK_CENTER = [-153.5, 64];
 const HI_CENTER = [-155.5, 19.5];
 const INSET_TARGET_AK = [-128, 32];
-const INSET_TARGET_HI = [-117, 27];
+const INSET_TARGET_HI = [-110, 27];
 
 function bboxFromGeometry(geom: GeoJSON.Polygon | GeoJSON.MultiPolygon): [number, number, number, number] {
   let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
@@ -254,14 +243,18 @@ export function TerritoryMap({
   overlapStates,
   overlapCounties = new Set(),
   selectedState = null,
+  zoomToStateTrigger = 0,
   onHover,
   onStateClick,
+  onClearState,
 }: TerritoryMapProps) {
   const mapRef = useRef<maplibregl.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<maplibregl.Popup | null>(null);
   const stateBboxesRef = useRef<Map<string, [number, number, number, number]>>(new Map());
-  const clickHandlerRef = useRef<((e: maplibregl.MapMouseEvent) => void) | null>(null);
+  const dblClickHandlerRef = useRef<((e: maplibregl.MapMouseEvent) => void) | null>(null);
+  const prevSelectedRef = useRef<string | null>(null);
+  const allStateAbbrsRef = useRef<string[]>([]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -271,12 +264,20 @@ export function TerritoryMap({
       style: {
         version: 8,
         sources: {},
-        layers: [],
+        layers: [
+          {
+            id: "ocean-bg",
+            type: "background",
+            paint: { "background-color": "#2d3748" },
+          },
+        ],
       },
       center: [-95.7129, 37.0902],
       zoom: 3,
+      minZoom: 2,
     });
 
+    map.doubleClickZoom.disable();
     mapRef.current = map;
 
     return () => {
@@ -285,6 +286,7 @@ export function TerritoryMap({
     };
   }, []);
 
+  // ---------- data load ----------
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -293,32 +295,19 @@ export function TerritoryMap({
       const res = await fetch("/data/geo/states.geojson");
       const geojson = await res.json();
       const overlapPatternsToAdd: { id: string; colors: string[] }[] = [];
+      const stateAbbrList: string[] = [];
 
       const features = geojson.features.map((f: GeoJSON.Feature) => {
         const rawId = f.id ?? (f.properties as { id?: string })?.id;
         const fips = typeof rawId === "string" ? (rawId.length === 1 ? `0${rawId}` : rawId) : String(rawId ?? "");
         let geometry = f.geometry as GeoJSON.Polygon | GeoJSON.MultiPolygon;
         if (fips === "02" && geometry) {
-          geometry = transformGeometryScale2(
-            geometry,
-            0.28,
-            0.35,
-            AK_CENTER[0],
-            AK_CENTER[1],
-            INSET_TARGET_AK[0],
-            INSET_TARGET_AK[1]
-          );
+          geometry = transformGeometryScale2(geometry, 0.28, 0.35, AK_CENTER[0], AK_CENTER[1], INSET_TARGET_AK[0], INSET_TARGET_AK[1]);
         } else if (fips === "15" && geometry) {
-          geometry = transformGeometry(
-            geometry,
-            1.2,
-            HI_CENTER[0],
-            HI_CENTER[1],
-            INSET_TARGET_HI[0],
-            INSET_TARGET_HI[1]
-          );
+          geometry = transformGeometry(geometry, 1.2, HI_CENTER[0], HI_CENTER[1], INSET_TARGET_HI[0], INSET_TARGET_HI[1]);
         }
         const stateAbbr = getStateAbbrFromFeature(f);
+        if (stateAbbr) stateAbbrList.push(stateAbbr);
         const data = stateAbbr ? stateData.get(stateAbbr) : null;
         const overlap = stateAbbr ? overlapStates.has(stateAbbr) : false;
         const overlapColors =
@@ -326,13 +315,11 @@ export function TerritoryMap({
             ? (data.groups?.map((g) => g.colorHex) ?? data.reps?.map((r) => r.colorHex) ?? [data.color])
             : [];
         if (overlap && overlapColors.length > 0) {
-          const effectiveColors =
-            overlapColors.length > 4 ? [overlapColors[0], overlapColors[1]] : overlapColors;
+          const effectiveColors = overlapColors.length > 4 ? [overlapColors[0], overlapColors[1]] : overlapColors;
           overlapPatternsToAdd.push({ id: overlapPatternId(effectiveColors), colors: overlapColors });
         }
         if (stateAbbr) stateBboxesRef.current.set(stateAbbr, bboxFromGeometry(geometry));
-        const baseColor =
-          overlap && overlapColors.length > 0 ? overlapColors[0] : (data?.color ?? "#e2e8f0");
+        const baseColor = overlap && overlapColors.length > 0 ? overlapColors[0] : (data?.color ?? "#e2e8f0");
         return {
           ...f,
           geometry,
@@ -342,22 +329,23 @@ export function TerritoryMap({
             fillColor: baseColor,
             overlap,
             ...(overlap && overlapColors.length > 0
-              ? {
-                  overlapPatternId: overlapPatternId(
-                    overlapColors.length > 4 ? [overlapColors[0], overlapColors[1]] : overlapColors
-                  ),
-                }
+              ? { overlapPatternId: overlapPatternId(overlapColors.length > 4 ? [overlapColors[0], overlapColors[1]] : overlapColors) }
               : {}),
           },
         };
       });
 
+      allStateAbbrsRef.current = stateAbbrList;
       const sourceData = { type: "FeatureCollection" as const, features };
 
       if (map.getSource("states")) {
         (map.getSource("states") as maplibregl.GeoJSONSource).setData(sourceData);
       } else {
-        map.addSource("states", { type: "geojson", data: sourceData });
+        map.addSource("states", {
+          type: "geojson",
+          data: sourceData,
+          promoteId: "stateAbbr",
+        });
       }
 
       if (!map.hasImage("zebra-hatch")) {
@@ -374,23 +362,32 @@ export function TerritoryMap({
         }
       }
 
-      const fillLayer = map.getLayer("states-fill");
-      if (fillLayer) map.removeLayer("states-fill");
-      const overlapLayer = map.getLayer("states-overlap");
-      if (overlapLayer) map.removeLayer("states-overlap");
-      const outlineLayer = map.getLayer("states-outline");
-      if (outlineLayer) map.removeLayer("states-outline");
+      // Remove old layers for clean rebuild
+      for (const lid of [
+        "states-fill", "states-overlap", "states-outline",
+        "states-dim-overlay", "states-selected-halo", "states-selected-outline",
+        "states-selected",
+      ]) {
+        if (map.getLayer(lid)) map.removeLayer(lid);
+      }
 
+      // --- Layer 1: base fill ---
       map.addLayer({
         id: "states-fill",
         type: "fill",
         source: "states",
         paint: {
           "fill-color": ["get", "fillColor"],
-          "fill-opacity": 0.85,
+          "fill-opacity": [
+            "case",
+            ["boolean", ["feature-state", "dimmed"], false],
+            0.3,
+            0.85,
+          ],
         },
       });
 
+      // --- Layer 2: overlap pattern ---
       map.addLayer({
         id: "states-overlap",
         type: "fill",
@@ -398,22 +395,104 @@ export function TerritoryMap({
         filter: ["==", ["get", "overlap"], true],
         paint: {
           "fill-pattern": ["coalesce", ["get", "overlapPatternId"], "zebra-hatch"],
-          "fill-opacity": 0.7,
+          "fill-opacity": [
+            "case",
+            ["boolean", ["feature-state", "dimmed"], false],
+            0.15,
+            0.7,
+          ],
         },
       });
 
+      // --- Layer 3: dim overlay (gray wash on non-selected) ---
+      map.addLayer({
+        id: "states-dim-overlay",
+        type: "fill",
+        source: "states",
+        paint: {
+          "fill-color": "#9ca3af",
+          "fill-opacity": [
+            "case",
+            ["boolean", ["feature-state", "dimmed"], false],
+            0.4,
+            0,
+          ],
+        },
+      });
+
+      // --- Layer 4: base outline ---
       map.addLayer({
         id: "states-outline",
         type: "line",
         source: "states",
         paint: {
-          "line-color": "#64748b",
-          "line-width": 1,
+          "line-color": [
+            "case",
+            ["boolean", ["feature-state", "dimmed"], false],
+            "#d1d5db",
+            "#64748b",
+          ],
+          "line-width": [
+            "case",
+            ["boolean", ["feature-state", "dimmed"], false],
+            0.5,
+            1,
+          ],
         },
       });
 
-      if (clickHandlerRef.current) map.off("click", clickHandlerRef.current);
-      clickHandlerRef.current = (e: maplibregl.MapMouseEvent) => {
+      // --- Layer 5: selected state halo (wide, low-opacity glow) ---
+      map.addLayer({
+        id: "states-selected-halo",
+        type: "line",
+        source: "states",
+        paint: {
+          "line-color": "#38bdf8",
+          "line-width": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            8,
+            0,
+          ],
+          "line-opacity": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            0.35,
+            0,
+          ],
+          "line-blur": 4,
+        },
+      });
+
+      // --- Layer 6: selected state crisp outline ---
+      map.addLayer({
+        id: "states-selected-outline",
+        type: "line",
+        source: "states",
+        paint: {
+          "line-color": "#0ea5e9",
+          "line-width": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            3.5,
+            0,
+          ],
+          "line-opacity": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            1,
+            0,
+          ],
+        },
+      });
+
+      // Apply feature-state for current selection (if any)
+      applyFeatureState(map, selectedState);
+
+      // Double-click handler for state selection
+      if (dblClickHandlerRef.current) map.off("dblclick", dblClickHandlerRef.current);
+      dblClickHandlerRef.current = (e: maplibregl.MapMouseEvent) => {
+        e.preventDefault();
         const hasCounties = !!map.getLayer("counties-fill");
         const countyFeats = hasCounties ? map.queryRenderedFeatures(e.point, { layers: ["counties-fill"] }) : [];
         const stateFeats = map.queryRenderedFeatures(e.point, { layers: ["states-fill"] });
@@ -430,9 +509,9 @@ export function TerritoryMap({
           }
         }
       };
-      map.on("click", clickHandlerRef.current);
+      map.on("dblclick", dblClickHandlerRef.current);
 
-      // County-level coverage (when servicesWholeState=false or rep has county-only)
+      // County-level coverage
       const countyFeatures: GeoJSON.Feature[] = [];
       if (countyData.size > 0) {
         const states = [...countyData.keys()];
@@ -453,12 +532,10 @@ export function TerritoryMap({
                   ? (data.groups?.map((g) => g.colorHex) ?? data.reps?.map((r) => r.colorHex) ?? [data.color])
                   : [];
                 if (overlap && overlapColors.length > 0) {
-                  const effectiveColors =
-                    overlapColors.length > 4 ? [overlapColors[0], overlapColors[1]] : overlapColors;
+                  const effectiveColors = overlapColors.length > 4 ? [overlapColors[0], overlapColors[1]] : overlapColors;
                   overlapPatternsToAdd.push({ id: overlapPatternId(effectiveColors), colors: overlapColors });
                 }
-                const countyBaseColor =
-                  overlap && overlapColors.length > 0 ? overlapColors[0] : data.color;
+                const countyBaseColor = overlap && overlapColors.length > 0 ? overlapColors[0] : data.color;
                 countyFeatures.push({
                   ...f,
                   properties: {
@@ -468,11 +545,7 @@ export function TerritoryMap({
                     fillColor: countyBaseColor,
                     overlap,
                     ...(overlap && overlapColors.length > 0
-                      ? {
-                          overlapPatternId: overlapPatternId(
-                            overlapColors.length > 4 ? [overlapColors[0], overlapColors[1]] : overlapColors
-                          ),
-                        }
+                      ? { overlapPatternId: overlapPatternId(overlapColors.length > 4 ? [overlapColors[0], overlapColors[1]] : overlapColors) }
                       : {}),
                   },
                 });
@@ -534,7 +607,7 @@ export function TerritoryMap({
         });
       }
 
-      // Zoom to highlighted territory at ~80% of view (10% padding on each side)
+      // Auto-zoom to regional bounds
       let bounds: [number, number, number, number] | null = null;
       for (const stateAbbr of stateData.keys()) {
         const b = stateBboxesRef.current.get(stateAbbr);
@@ -545,9 +618,13 @@ export function TerritoryMap({
         if (b) bounds = unionBbox(bounds, b);
       }
       if (bounds && containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        const pad = Math.min(rect.width, rect.height) * 0.1;
-        map.fitBounds(bounds, { padding: pad, duration: 500, maxZoom: 10 });
+        const [, , maxLng] = bounds;
+        const spanLng = maxLng - bounds[0];
+        if (spanLng < 35) {
+          const rect = containerRef.current.getBoundingClientRect();
+          const pad = Math.min(rect.width, rect.height) * 0.1;
+          map.fitBounds(bounds, { padding: pad, duration: 500, maxZoom: 10 });
+        }
       }
     };
 
@@ -558,15 +635,64 @@ export function TerritoryMap({
     }
   }, [stateData, countyData, overlapStates, overlapCounties, onStateClick]);
 
+  // ---------- feature-state helper ----------
+  const applyFeatureState = useCallback((map: maplibregl.Map, selected: string | null) => {
+    if (!map.getSource("states")) return;
+
+    // Clear previous selection
+    const prev = prevSelectedRef.current;
+    if (prev) {
+      map.setFeatureState({ source: "states", id: prev }, { selected: false, dimmed: false });
+    }
+
+    if (selected) {
+      // Dim all states, then un-dim + select the chosen one
+      for (const abbr of allStateAbbrsRef.current) {
+        if (abbr === selected) {
+          map.setFeatureState({ source: "states", id: abbr }, { selected: true, dimmed: false });
+        } else {
+          map.setFeatureState({ source: "states", id: abbr }, { selected: false, dimmed: true });
+        }
+      }
+    } else {
+      // Clear everything
+      for (const abbr of allStateAbbrsRef.current) {
+        map.setFeatureState({ source: "states", id: abbr }, { selected: false, dimmed: false });
+      }
+    }
+
+    prevSelectedRef.current = selected;
+  }, []);
+
+  // ---------- selection changed: update feature-state + zoom ----------
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !selectedState) return;
+    if (!map || !map.getSource("states")) return;
+
+    applyFeatureState(map, selectedState);
+
+    if (selectedState) {
+      popupRef.current?.remove();
+      const bbox = stateBboxesRef.current.get(selectedState);
+      if (bbox) {
+        map.fitBounds(bbox, { padding: 60, duration: 500, maxZoom: 8 });
+      }
+    } else {
+      map.easeTo({ center: [-95.7129, 37.0902], zoom: 3, duration: 500 });
+    }
+  }, [selectedState, applyFeatureState]);
+
+  // ---------- zoom-to-state trigger (from panel button) ----------
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !selectedState || zoomToStateTrigger === 0) return;
     const bbox = stateBboxesRef.current.get(selectedState);
     if (bbox) {
       map.fitBounds(bbox, { padding: 60, duration: 500, maxZoom: 8 });
     }
-  }, [selectedState]);
+  }, [zoomToStateTrigger, selectedState]);
 
+  // ---------- popup on hover ----------
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -590,7 +716,7 @@ export function TerritoryMap({
         } else if (stateAbbr) {
           data = stateData.get(stateAbbr) ?? null;
         }
-        if (data && popupRef.current && stateAbbr) {
+        if (data && popupRef.current && stateAbbr && !selectedState) {
           const names =
             mode === "group" && data.groups
               ? data.groups.flatMap((g) =>
@@ -643,7 +769,7 @@ export function TerritoryMap({
       map.off("mousemove", handleMouseMove);
       map.off("mouseleave", handleMouseLeave);
     };
-  }, [stateData, countyData, mode, onHover]);
+  }, [stateData, countyData, mode, onHover, selectedState]);
 
   return <div ref={containerRef} className="w-full h-full min-h-[400px]" />;
 }

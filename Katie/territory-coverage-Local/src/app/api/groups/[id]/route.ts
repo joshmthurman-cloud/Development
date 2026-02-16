@@ -33,7 +33,7 @@ export async function PATCH(
   }
 
   const body = await req.json();
-  const { name, colorHex, servicesWholeState } = body;
+  const { name, colorHex, servicesWholeState, workGroupAccount } = body;
 
   const group = await prisma.group.update({
     where: { id: (await params).id },
@@ -41,6 +41,7 @@ export async function PATCH(
       ...(name != null && { name }),
       ...(colorHex != null && { colorHex }),
       ...(servicesWholeState != null && { servicesWholeState }),
+      ...(workGroupAccount !== undefined && { workGroupAccount: workGroupAccount || null }),
     },
     include: { reps: true },
   });

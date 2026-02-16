@@ -2,11 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
-const REP_PALETTE = [
-  "#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6",
-  "#EC4899", "#06B6D4", "#84CC16", "#F97316", "#6366F1",
-  "#14B8A6", "#A855F7", "#E11D48", "#0EA5E9", "#22C55E",
+export const PALETTE = [
+  "#4E79A7", // Blue
+  "#F28E2B", // Orange
+  "#E15759", // Red
+  "#76B7B2", // Teal
+  "#59A14F", // Green
+  "#EDC948", // Yellow
+  "#B07AA1", // Purple
+  "#FF9DA7", // Pink
+  "#9C755F", // Brown
+  "#BAB0AC", // Gray
 ];
+
+const REP_PALETTE = PALETTE;
 
 /** Pick a color not used by the group or its reps (so reps in a group stay distinct). */
 function pickDistinctRepColor(
@@ -30,7 +39,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { name, groupId, repColorHex } = body;
+  const { name, groupId, repColorHex, totalAmountOfSales, numberOfDealers, housingMarketShare } = body;
 
   if (!name || !groupId) {
     return NextResponse.json(
@@ -59,6 +68,9 @@ export async function POST(req: NextRequest) {
       name,
       groupId,
       repColorHex: colorToUse,
+      totalAmountOfSales: totalAmountOfSales != null ? Number(totalAmountOfSales) : null,
+      numberOfDealers: numberOfDealers != null ? Number(numberOfDealers) : null,
+      housingMarketShare: housingMarketShare != null ? Number(housingMarketShare) : null,
     },
     include: { territories: true },
   });

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import Link from "next/link";
-import { signOut } from "next-auth/react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { TerritoryMap, type TerritoryData, type MapMode } from "@/components/TerritoryMap";
-import { AppHeader } from "@/components/AppHeader";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import { Menu, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { VPTopNav } from "@/components/vp-dashboard/VPTopNav";
+import { VPLeftRail } from "@/components/vp-dashboard/VPLeftRail";
+import { VPMapHeaderStrip } from "@/components/vp-dashboard/VPMapHeaderStrip";
+import { VPRightPanel, type StateDetail, type AggregateTotals } from "@/components/vp-dashboard/VPRightPanel";
+import { T } from "@/lib/theme";
 
 interface Group {
   id: string;
@@ -20,6 +21,9 @@ interface Rep {
   id: string;
   name: string;
   repColorHex: string | null;
+  totalAmountOfSales: number | null;
+  numberOfDealers: number | null;
+  housingMarketShare: number | null;
   territories: { stateAbbr: string; level: string; countyFips: string }[];
 }
 
@@ -28,6 +32,9 @@ export default function DashboardPage() {
   const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
   const [selectedState, setSelectedState] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [leftRailOpen, setLeftRailOpen] = useState(false);
+  const [rightPanelOpen, setRightPanelOpen] = useState(true);
+  const [zoomToStateTrigger, setZoomToStateTrigger] = useState(0);
 
   const fetchGroups = () => {
     fetch("/api/groups", { cache: "no-store" })
@@ -58,9 +65,9 @@ export default function DashboardPage() {
 
   const { stateData, countyData, overlapStates, overlapCounties, mode, legendItems } = useMemo(() => {
     const stateData = new Map<string, TerritoryData>();
-    const countyData = new Map<string, Map<string, TerritoryData>>(); // stateAbbr -> countyFips -> data
+    const countyData = new Map<string, Map<string, TerritoryData>>();
     const overlapStates = new Set<string>();
-    const overlapCounties = new Set<string>(); // "stateAbbr:countyFips"
+    const overlapCounties = new Set<string>();
     let legendItems: { name: string; color: string }[] = [];
     let mode: MapMode = "group";
 
@@ -83,7 +90,6 @@ export default function DashboardPage() {
       mode = "group";
       for (const g of selectedGroups) {
         legendItems.push({ name: g.name, color: g.colorHex });
-        const useExplicitOnly = !g.servicesWholeState;
         for (const rep of g.reps) {
           const coverage = getRepStateCoverage(rep.territories);
           for (const [stateAbbr, { hasState, countyFips }] of coverage) {
@@ -175,7 +181,6 @@ export default function DashboardPage() {
                   name: rep.name,
                   colorHex: rep.repColorHex || g.colorHex,
                 });
-                // Same group: do not mark as overlap — state shows as one group color
               } else {
                 stateData.set(stateAbbr, {
                   stateAbbr,
@@ -186,7 +191,6 @@ export default function DashboardPage() {
             } else if (countyFips.length > 0) {
               for (const fips of countyFips) {
                 const fips5 = fips.padStart(5, "0");
-                const key = `${stateAbbr}:${fips5}`;
                 let stateMap = countyData.get(stateAbbr);
                 if (!stateMap) {
                   stateMap = new Map();
@@ -200,7 +204,6 @@ export default function DashboardPage() {
                 };
                 if (existing) {
                   existing.reps!.push(entry.reps![0]);
-                  // Same group: do not mark county as overlap
                 } else {
                   stateMap.set(fips5, entry);
                 }
@@ -230,13 +233,49 @@ export default function DashboardPage() {
     });
   };
 
-  const handleSelectAll = () => {
-    setSelectedGroupIds(new Set(groups.map((g) => g.id)));
-  };
+  const handleSelectAll = () => setSelectedGroupIds(new Set(groups.map((g) => g.id)));
+  const handleClearAll = () => setSelectedGroupIds(new Set());
 
-  const handleClearAll = () => {
-    setSelectedGroupIds(new Set());
-  };
+  const stateToGroupIds = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    for (const g of groups) {
+      for (const rep of g.reps) {
+        for (const t of rep.territories) {
+          if (!t.stateAbbr) continue;
+          let set = map.get(t.stateAbbr);
+          if (!set) {
+            set = new Set();
+            map.set(t.stateAbbr, set);
+          }
+          set.add(g.id);
+        }
+      }
+    }
+    return map;
+  }, [groups]);
+
+  const handleStateClick = useCallback(
+    (stateAbbr: string) => {
+      setSelectedState((prev) => {
+        if (prev === stateAbbr) return null;
+
+        const coveredBySelected = stateData.has(stateAbbr);
+        if (!coveredBySelected) {
+          const groupIds = stateToGroupIds.get(stateAbbr);
+          if (groupIds && groupIds.size > 0) {
+            setSelectedGroupIds((prev) => {
+              const next = new Set(prev);
+              for (const gid of groupIds) next.add(gid);
+              return next;
+            });
+          }
+        }
+
+        return stateAbbr;
+      });
+    },
+    [stateData, stateToGroupIds]
+  );
 
   const selectedStateData = useMemo(() => {
     if (!selectedState) return null;
@@ -283,173 +322,296 @@ export default function DashboardPage() {
     };
   }, [selectedState, stateData, countyData]);
 
-  return (
-    <div className="h-screen flex flex-col bg-slate-50">
-      <AppHeader title="Territory Coverage">
-        <Link
-          href="/groups"
-          className="text-sm text-slate-600 hover:text-slate-900"
-        >
-          Groups
-        </Link>
-        <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          className="text-sm text-slate-600 hover:text-slate-900"
-        >
-          Sign out
-        </button>
-      </AppHeader>
+  const stateDetail = useMemo((): StateDetail | null => {
+    if (!selectedState || !selectedStateData) return null;
+    const hasOverlap =
+      overlapStates.has(selectedState) ||
+      [...overlapCounties].some((k) => k.startsWith(`${selectedState}:`));
 
-      <main className="flex-1 min-h-0">
-        <PanelGroup direction="horizontal">
-          <Panel defaultSize={20} minSize={15} maxSize={35}>
-            <div className="h-full overflow-auto p-4 bg-white border-r border-slate-200">
-              <h2 className="font-medium text-slate-800 mb-2">Groups</h2>
-              <div className="flex gap-2 mb-3">
-                <button
-                  onClick={handleSelectAll}
-                  className="text-xs px-2 py-1 bg-slate-100 rounded hover:bg-slate-200"
-                >
-                  Select All
-                </button>
-                <button
-                  onClick={handleClearAll}
-                  className="text-xs px-2 py-1 bg-slate-100 rounded hover:bg-slate-200"
-                >
-                  Clear All
-                </button>
+    const repNames = new Set<string>();
+    for (const g of selectedStateData.aggregatedGroups) {
+      for (const r of g.reps) repNames.add(r.name);
+    }
+    for (const r of selectedStateData.aggregatedReps) repNames.add(r.name);
+
+    let totalSales = 0;
+    let totalDealers = 0;
+    let totalHousingShare = 0;
+    let repCount = 0;
+    for (const g of selectedGroups) {
+      for (const rep of g.reps) {
+        if (!repNames.has(rep.name)) continue;
+        totalSales += rep.totalAmountOfSales ?? 0;
+        totalDealers += rep.numberOfDealers ?? 0;
+        totalHousingShare += rep.housingMarketShare ?? 0;
+        repCount++;
+      }
+    }
+
+    const repLookup = new Map<string, Rep>();
+    for (const g of selectedGroups) {
+      for (const rep of g.reps) repLookup.set(rep.name, rep);
+    }
+
+    const groupsWithSales = selectedStateData.aggregatedGroups.map((g) => ({
+      ...g,
+      reps: g.reps.map((r) => ({
+        ...r,
+        totalAmountOfSales: repLookup.get(r.name)?.totalAmountOfSales ?? undefined,
+      })),
+    }));
+
+    return {
+      stateAbbr: selectedState,
+      groups: groupsWithSales,
+      reps: selectedStateData.aggregatedReps,
+      countyCount: selectedStateData.countyCount,
+      hasCoverage: !!selectedStateData.hasCoverage,
+      hasOverlap,
+      totalAmountOfSales: totalSales,
+      numberOfDealers: totalDealers,
+      housingMarketShare: repCount > 0 ? totalHousingShare / repCount : 0,
+    };
+  }, [selectedState, selectedStateData, overlapStates, overlapCounties, selectedGroups]);
+
+  const aggregateTotals = useMemo((): AggregateTotals | null => {
+    if (selectedGroups.length === 0) return null;
+    let totalReps = 0;
+    let totalSales = 0;
+    let totalDealers = 0;
+    let totalHousingShare = 0;
+    let repCount = 0;
+    for (const g of selectedGroups) {
+      totalReps += g.reps.length;
+      for (const rep of g.reps) {
+        totalSales += rep.totalAmountOfSales ?? 0;
+        totalDealers += rep.numberOfDealers ?? 0;
+        totalHousingShare += rep.housingMarketShare ?? 0;
+        repCount++;
+      }
+    }
+    return {
+      totalGroups: selectedGroups.length,
+      totalReps,
+      totalSales,
+      totalDealers,
+      avgMarketShare: repCount > 0 ? totalHousingShare / repCount : 0,
+    };
+  }, [selectedGroups]);
+
+  const copyStateCoverageText = useCallback(() => {
+    if (!selectedState || !selectedStateData) return;
+    const lines: string[] = [`State: ${selectedState}`];
+    if (selectedStateData.aggregatedGroups.length > 0) {
+      for (const g of selectedStateData.aggregatedGroups) {
+        lines.push(`\n${g.name}:`);
+        for (const r of g.reps) lines.push(`  - ${r.name}`);
+      }
+    } else if (selectedStateData.aggregatedReps.length > 0) {
+      lines.push("\nReps:");
+      for (const r of selectedStateData.aggregatedReps) lines.push(`  - ${r.name}`);
+    }
+    if (selectedStateData.countyCount > 0) {
+      lines.push(`\nCounty-level coverage: ${selectedStateData.countyCount}`);
+    }
+    if (!selectedStateData.hasCoverage) lines.push("\nNo coverage in this state");
+    void navigator.clipboard.writeText(lines.join("\n"));
+  }, [selectedState, selectedStateData]);
+
+  const regionCount = selectedGroupIds.size > 0 ? selectedGroups.length : groups.length;
+  const dateRange = "Jan 1 – Dec 31, 2025";
+
+  const coveredCount = stateData.size;
+  const overlapCount = overlapStates.size;
+  const coveragePct = coveredCount > 0 ? Math.round((coveredCount / 50) * 100) : 0;
+
+  return (
+    <div className="min-h-screen" style={{ background: T.pageBg }}>
+      {/* Full-width shell */}
+      <div
+        className="mx-auto flex flex-col overflow-hidden min-h-screen max-w-[1440px]"
+        style={{ background: T.shellBg }}
+      >
+        <VPTopNav />
+
+        {/* Page header row — matches Analytics */}
+        <div
+          className="px-5 py-3 flex items-center justify-between shrink-0"
+          style={{ borderBottom: `1px solid ${T.border}` }}
+        >
+          <div>
+            <h1 className="text-sm font-semibold uppercase tracking-wide" style={{ color: T.textPrimary }}>
+              Overview
+            </h1>
+            <p className="text-[11px] mt-0.5" style={{ color: T.textMuted }}>Coverage Map</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span
+              className="inline-flex items-center h-6 px-2.5 rounded-full text-[11px] font-medium"
+              style={{ background: "rgba(59,130,246,0.15)", color: "#93bbfc" }}
+            >
+              Covered: {coveredCount}
+            </span>
+            <span
+              className="inline-flex items-center h-6 px-2.5 rounded-full text-[11px] font-medium"
+              style={{ background: "rgba(234,179,8,0.15)", color: "#fbbf24" }}
+            >
+              Overlapped: {overlapCount}
+            </span>
+            <span
+              className="inline-flex items-center h-6 px-2.5 rounded-full text-[11px] font-medium"
+              style={{ background: "rgba(16,185,129,0.15)", color: "#6ee7b7" }}
+            >
+              Coverage: {coveragePct}%
+            </span>
+          </div>
+        </div>
+
+        <div className="flex min-h-0">
+          {/* Left rail: fixed on lg, drawer on small */}
+          <div className="hidden lg:block lg:overflow-auto" style={{ maxHeight: "calc(100vh - 108px)" }}>
+            <VPLeftRail
+              groups={groups}
+              selectedGroupIds={selectedGroupIds}
+              onToggleGroup={handleToggleGroup}
+              onSelectAll={handleSelectAll}
+              onClearAll={handleClearAll}
+              loading={loading}
+            />
+          </div>
+          {leftRailOpen && (
+            <div className="fixed inset-0 z-30 lg:hidden">
+              <div className="absolute inset-0 bg-black/40" onClick={() => setLeftRailOpen(false)} />
+              <div className="absolute left-0 top-0 bottom-0 w-[240px] z-40 shadow-xl">
+                <VPLeftRail
+                  groups={groups}
+                  selectedGroupIds={selectedGroupIds}
+                  onToggleGroup={handleToggleGroup}
+                  onSelectAll={handleSelectAll}
+                  onClearAll={handleClearAll}
+                  loading={loading}
+                />
               </div>
-              {loading ? (
-                <p className="text-sm text-slate-500">Loading...</p>
-              ) : (
-                <div className="space-y-2">
-                  {groups.map((g) => (
-                    <label
-                      key={g.id}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <Checkbox
-                        checked={selectedGroupIds.has(g.id)}
-                        onCheckedChange={() => handleToggleGroup(g.id)}
-                      />
-                      <span
-                        className="w-3 h-3 rounded-sm shrink-0"
-                        style={{ backgroundColor: g.colorHex }}
-                      />
-                      <span className="text-sm text-slate-700">{g.name}</span>
-                    </label>
-                  ))}
-                </div>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => setLeftRailOpen(true)}
+            className="lg:hidden absolute left-4 top-14 z-20 w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
+            style={{ background: T.cardBg, color: T.textPrimary }}
+            aria-label="Open filters"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+
+          {/* Center: map card */}
+          <div className="flex-1 flex flex-col min-w-0">
+            <VPMapHeaderStrip regionCount={regionCount} dateRange={dateRange} />
+
+            {/* Map canvas — fixed height so page can scroll */}
+            <div
+              className="relative"
+              style={{ height: "clamp(360px, 55vh, 560px)", borderBottom: `1px solid ${T.rowBorder}` }}
+            >
+              <TerritoryMap
+                mode={mode}
+                stateData={stateData}
+                countyData={countyData}
+                overlapStates={overlapStates}
+                overlapCounties={overlapCounties}
+                selectedState={selectedState}
+                zoomToStateTrigger={zoomToStateTrigger}
+                onStateClick={(stateAbbr) => handleStateClick(stateAbbr)}
+                onClearState={() => setSelectedState(null)}
+              />
+              {selectedState && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedState(null)}
+                  className="absolute top-2.5 right-2.5 z-10 w-7 h-7 rounded-md flex items-center justify-center text-sm font-semibold shadow-sm transition-colors"
+                  style={{
+                    background: T.cardBg,
+                    color: T.textPrimary,
+                    border: `1px solid ${T.border}`,
+                  }}
+                  title="Back to full map"
+                  aria-label="Clear state selection"
+                >
+                  ×
+                </button>
               )}
             </div>
-          </Panel>
-          <PanelResizeHandle className="w-1 bg-slate-200 hover:bg-slate-300" />
-          <Panel defaultSize={80}>
-            <div className="h-full flex flex-col p-4">
-              <div className="flex-1 min-h-0 rounded-lg overflow-hidden border border-slate-200 bg-white relative">
-                <TerritoryMap
-                  mode={mode}
-                  stateData={stateData}
-                  countyData={countyData}
-                  overlapStates={overlapStates}
-                  overlapCounties={overlapCounties}
-                  selectedState={selectedState}
-                  onStateClick={(stateAbbr) => setSelectedState(stateAbbr)}
-                />
-                {selectedState && (
-                  <div className="absolute top-2 left-2 z-10 bg-white rounded-lg shadow-lg border border-slate-200 p-4 max-w-sm max-h-[70vh] overflow-auto">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold text-slate-800">{selectedState}</h3>
-                      <button
-                        onClick={() => setSelectedState(null)}
-                        className="text-slate-500 hover:text-slate-700 text-lg leading-none"
-                      >
-                        ×
-                      </button>
-                    </div>
-                    {selectedStateData?.hasCoverage ? (
-                      <div className="space-y-3 text-sm">
-                        {selectedStateData.aggregatedGroups.length > 0 ? (
-                          selectedStateData.aggregatedGroups.map((g) => (
-                            <div key={g.name} className="border-b border-slate-100 pb-2 last:border-0">
-                              <div className="flex items-center gap-2 font-medium text-slate-700">
-                                <span
-                                  className="w-3 h-3 rounded-sm shrink-0"
-                                  style={{ backgroundColor: g.colorHex }}
-                                />
-                                {g.name}
-                              </div>
-                              <ul className="mt-1 ml-5 text-slate-600 space-y-0.5">
-                                {g.reps.map((r) => (
-                                  <li key={r.name}>{r.name}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          ))
-                        ) : selectedStateData.aggregatedReps.length > 0 ? (
-                          <div>
-                            <div className="font-medium text-slate-700 mb-1">Reps</div>
-                            <ul className="ml-2 text-slate-600 space-y-0.5">
-                              {selectedStateData.aggregatedReps.map((r) => (
-                                <li key={r.name} className="flex items-center gap-1.5">
-                                  <span
-                                    className="w-2 h-2 rounded-full shrink-0"
-                                    style={{ backgroundColor: r.colorHex }}
-                                  />
-                                  {r.name}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ) : null}
-                        {selectedStateData.countyCount > 0 && (
-                          <p className="text-slate-500 text-xs">
-                            + {selectedStateData.countyCount} county-level coverage
-                          </p>
-                        )}
-                        {(selectedStateData.aggregatedGroups.length > 4 ||
-                          selectedStateData.aggregatedReps.length > 4) && (
-                          <p className="text-slate-500 text-xs">
-                            Map shows first 2 colors; +
-                            {selectedStateData.aggregatedGroups.length > 0
-                              ? selectedStateData.aggregatedGroups.length - 2
-                              : selectedStateData.aggregatedReps.length - 2}{" "}
-                            more
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-slate-500 text-sm">No coverage in this state</p>
-                    )}
+
+            {/* Legend footer */}
+            {legendItems.length > 0 && (
+              <div
+                className="px-4 py-2 flex flex-wrap gap-x-4 gap-y-1"
+                style={{ background: T.cardBg, borderTop: `1px solid ${T.rowBorder}` }}
+              >
+                {legendItems.map((item) => (
+                  <div
+                    key={item.name}
+                    className="flex items-center gap-1.5 text-[11px]"
+                    style={{ color: T.textMuted }}
+                  >
+                    <span
+                      className="w-3 h-3 rounded-sm shrink-0"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    {item.name}
+                  </div>
+                ))}
+                {(overlapStates.size > 0 || overlapCounties.size > 0) && (
+                  <div
+                    className="flex items-center gap-1.5 text-[11px]"
+                    style={{ color: T.textMuted }}
+                  >
+                    <span className="w-3 h-3 rounded-sm shrink-0 bg-[repeating-linear-gradient(-45deg,transparent,transparent_2px,#94A3B8_2px,#94A3B8_4px)]" />
+                    Overlap
                   </div>
                 )}
               </div>
-              {legendItems.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-3">
-                  {legendItems.map((item) => (
-                    <div
-                      key={item.name}
-                      className="flex items-center gap-1.5 text-sm"
-                    >
-                      <span
-                        className="w-4 h-4 rounded shrink-0"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="text-slate-600">{item.name}</span>
-                    </div>
-                  ))}
-                  {(overlapStates.size > 0 || overlapCounties.size > 0) && (
-                    <div className="flex items-center gap-1.5 text-sm text-slate-500">
-                      <span className="w-4 h-4 rounded shrink-0 bg-[repeating-linear-gradient(-45deg,transparent,transparent_2px,#94a3b8_2px,#94a3b8_4px)]" />
-                      <span>Overlap</span>
-                    </div>
-                  )}
-                </div>
-              )}
+            )}
+          </div>
+
+          {/* Right panel: fixed on lg */}
+          <div className="hidden lg:block">
+            <VPRightPanel
+              selectedState={selectedState}
+              stateDetail={stateDetail}
+              aggregateTotals={aggregateTotals}
+              onClear={() => setSelectedState(null)}
+              onCopy={copyStateCoverageText}
+              onZoomToState={() => setZoomToStateTrigger((t) => t + 1)}
+            />
+          </div>
+        </div>
+
+        {/* Mobile: right panel as collapsible section */}
+        <div className="lg:hidden" style={{ borderTop: `1px solid ${T.border}` }}>
+          <button
+            type="button"
+            onClick={() => setRightPanelOpen((o) => !o)}
+            className="w-full flex items-center justify-between px-5 py-2.5 text-xs font-medium uppercase tracking-wider"
+            style={{ background: T.cardBg, color: T.textPrimary }}
+          >
+            Status &amp; Activity
+            {rightPanelOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
+          </button>
+          {rightPanelOpen && (
+            <div className="max-h-[40vh] overflow-auto">
+              <VPRightPanel
+                selectedState={selectedState}
+                stateDetail={stateDetail}
+                aggregateTotals={aggregateTotals}
+                onClear={() => setSelectedState(null)}
+                onCopy={copyStateCoverageText}
+                onZoomToState={() => setZoomToStateTrigger((t) => t + 1)}
+              />
             </div>
-          </Panel>
-        </PanelGroup>
-      </main>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

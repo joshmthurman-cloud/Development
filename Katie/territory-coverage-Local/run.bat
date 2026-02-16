@@ -25,7 +25,11 @@ echo.
 
 REM --- Install dependencies ---
 echo [2/6] Installing npm dependencies...
-call npm install
+if exist "package-lock.json" (
+    call npm ci
+) else (
+    call npm install
+)
 if errorlevel 1 (
     echo ERROR: npm install failed
     pause

@@ -2,6 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
+/* VP Dashboard design tokens (4px scale, token-only) */
+:root {
+  /* Primary: Cyan/Teal */
+  --vp-primary-600: #00B8C6;
+  --vp-primary-500: #00C9D0;
+  --vp-primary-400: #00E2DC;
+  /* Secondary: Navy */
+  --vp-secondary-900: #1a2744;
+  --vp-secondary-800: #1f3150;
+  --vp-secondary-700: #273d5e;
+  /* Grays */
+  --vp-gray-50: #F8FAFC;
+  --vp-gray-100: #F1F5F9;
+  --vp-gray-200: #E2E8F0;
+  --vp-gray-300: #CBD5E1;
+  --vp-gray-400: #94A3B8;
+  --vp-gray-500: #64748B;
+  --vp-gray-600: #475569;
+  --vp-gray-800: #1E293B;
+  /* Accents */
+  --vp-warning: #F59E0B;
+  --vp-danger: #EF4444;
+  --vp-info: #38BDF8;
+  /* Shell */
+  --vp-shell-shadow: rgba(15, 23, 42, 0.18);
+  /* Radii */
+  --vp-radius-xl: 12px;
+  --vp-radius-lg: 8px;
+  --vp-radius-md: 6px;
+  /* Right panel / header strip (light) */
+  --vp-panel-bg: #ffffff;
+  --vp-panel-bg-alt: #f8fafc;
+  --vp-panel-border: #e2e8f0;
+  --vp-text-primary: #1E293B;
+  --vp-text-muted: #64748B;
+  --vp-divider: rgba(148, 163, 184, 0.25);
+}
+
+.dark {
+  --vp-panel-bg: var(--vp-secondary-800);
+  --vp-panel-bg-alt: var(--vp-secondary-900);
+  --vp-panel-border: var(--vp-secondary-700);
+  --vp-text-primary: var(--vp-gray-50);
+  --vp-text-muted: var(--vp-gray-400);
+  --vp-divider: rgba(255, 255, 255, 0.08);
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -58,4 +105,13 @@
 
 .maplibregl-map {
   font: inherit;
+}
+
+/* VP Dashboard: neutral gray backdrop behind shell */
+.vp-dashboard-bg {
+  min-height: 100vh;
+  background: #e5e7eb;
+}
+.dark .vp-dashboard-bg {
+  background: #111827;
 }

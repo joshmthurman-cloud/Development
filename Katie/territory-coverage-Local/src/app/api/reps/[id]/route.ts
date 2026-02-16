@@ -33,7 +33,7 @@ export async function PATCH(
   }
 
   const body = await req.json();
-  const { name, repColorHex } = body;
+  const { name, repColorHex, totalAmountOfSales, numberOfDealers, housingMarketShare } = body;
 
   const repId = (await params).id;
   if (repColorHex != null) {
@@ -61,6 +61,9 @@ export async function PATCH(
     data: {
       ...(name != null && { name }),
       ...(repColorHex != null && { repColorHex }),
+      ...(totalAmountOfSales !== undefined && { totalAmountOfSales: totalAmountOfSales == null ? null : Number(totalAmountOfSales) }),
+      ...(numberOfDealers !== undefined && { numberOfDealers: numberOfDealers == null ? null : Number(numberOfDealers) }),
+      ...(housingMarketShare !== undefined && { housingMarketShare: housingMarketShare == null ? null : Number(housingMarketShare) }),
     },
     include: { group: true, territories: true },
   });

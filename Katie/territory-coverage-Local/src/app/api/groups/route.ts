@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
+const PALETTE = [
+  "#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F",
+  "#EDC948", "#B07AA1", "#FF9DA7", "#9C755F", "#BAB0AC",
+];
+
+/** Pick first palette color not used by any existing group (top to bottom). */
+function pickNextGroupColor(usedHexes: string[]): string {
+  const used = new Set(usedHexes.map((h) => (h ?? "").replace(/^#/, "").toUpperCase()));
+  for (const c of PALETTE) {
+    const norm = c.replace(/^#/, "").toUpperCase();
+    if (!used.has(norm)) return c;
+  }
+  return PALETTE[used.length % PALETTE.length];
+}
+
 export async function GET() {
   const session = await auth();
   if (!session?.user) {
@@ -29,7 +44,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { name, colorHex } = body;
+  const { name, colorHex, workGroupAccount } = body;
 
   if (!name) {
     return NextResponse.json(
@@ -38,11 +53,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  let colorToUse = colorHex;
+  if (!colorToUse) {
+    const existing = await prisma.group.findMany({ select: { colorHex: true } });
+    colorToUse = pickNextGroupColor(existing.map((g) => g.colorHex));
+  }
+
   const group = await prisma.group.create({
     data: {
       name,
-      colorHex: colorHex || "#3B82F6",
+      colorHex: colorToUse,
       servicesWholeState: body.servicesWholeState ?? true,
+      workGroupAccount: workGroupAccount || null,
     },
   });
 

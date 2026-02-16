@@ -1,0 +1,20 @@
+/** Shared dark-slate design tokens used by Overview + Analytics pages */
+export const T = {
+  pageBg: "#0F172A",
+  shellBg: "#0F172A",
+  cardBg: "#1E293B",
+  tableBg: "#111827",
+  tableRowHover: "#233044",
+  border: "rgba(255,255,255,0.05)",
+  rowBorder: "rgba(255,255,255,0.04)",
+  textPrimary: "#F8FAFC",
+  textSecondary: "#CBD5E1",
+  textMuted: "#94A3B8",
+  highlight: "rgba(255,255,255,0.03)",
+  cardShadow: "0 4px 20px rgba(0,0,0,0.25)",
+  navBg: "#0c1a2e",
+  railBg: "#1E293B",
+  railBorder: "rgba(255,255,255,0.05)",
+  btnBg: "rgba(255,255,255,0.08)",
+  btnHover: "rgba(255,255,255,0.12)",
+} as const;
