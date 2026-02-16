@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="/static/img/curbstone-logo.png" type="image/png">
+    <link rel="icon" href="/static/img/Curbstone.svg" type="image/svg+xml">
     <title>{% block title %}Terminal Status Monitor{% endblock %}</title>
     <style>
         * {
@@ -204,11 +204,11 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body class="app-shell">
-    {% set _version = app_version | default('1.1.4') %}
+    {% set _version = app_version | default('1.1.5') %}
     <header class="topbar">
         <div class="topbar__inner header-content">
             <div class="topbar__left header-left">
-                <a href="/" class="header-logo-link"><img src="/static/img/curbstone-logo.png" alt="Curbstone" class="logo topbar__logo"></a>
+                <a href="/" class="header-logo-link"><img src="/static/img/Curbstone.svg" alt="Curbstone" class="logo topbar__logo"></a>
             </div>
             <div class="topbar__center header-center">
                 <h1 class="topbar__title"><a href="/">Terminal Status Monitor</a></h1>

@@ -77,11 +77,12 @@ body {
 
 /* ---- Topbar (dark header) ---- */
 .topbar {
-  background: var(--bg-topbar);
+  background: linear-gradient(90deg, #474954 0%, rgba(86, 147, 179, 0.22) 120%);
   color: var(--text-inverse);
-  padding: var(--space-sm) 0;
+  padding: 16px 0;
   margin-bottom: var(--space-xl);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(86, 147, 179, 0.35);
 }
 
 .topbar__inner {
@@ -100,8 +101,11 @@ body {
 
 .topbar .topbar__logo,
 .topbar .logo {
-  height: 48px;
+  height: 38px;
+  width: auto;
   display: block;
+  object-fit: contain;
+  vertical-align: middle;
 }
 
 .topbar__title {
