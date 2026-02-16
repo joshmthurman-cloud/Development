@@ -102,7 +102,7 @@ export default function Home() {
         e instanceof TypeError ||
         (e instanceof Error && (e.message === "Failed to fetch" || e.message.includes("NetworkError")));
       const message = isNetworkError
-        ? "Could not reach the analyzer. Make sure the backend is running and that NEXT_PUBLIC_API_URL points to it (e.g. http://10.200.0.235:8093 on the server)."
+        ? "Could not reach the analyzer. Make sure the backend is running and that NEXT_PUBLIC_API_URL points to it (e.g. http://10.200.0.235:8900 on the server)."
         : e instanceof Error
           ? e.message
           : "Upload failed";
