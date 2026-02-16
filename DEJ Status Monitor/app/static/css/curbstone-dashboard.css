@@ -77,26 +77,54 @@ body {
 
 /* ---- Topbar (dark header) ---- */
 .topbar {
+  position: relative;
   background: linear-gradient(90deg, rgba(86, 147, 179, 0.22) 0%, #474954 72%);
   color: var(--text-inverse);
-  padding: 20px 0;
+  padding: 20px 0 22px 0;
   margin-bottom: var(--space-xl);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   border-bottom: 1px solid rgba(86, 147, 179, 0.35);
 }
 
 .topbar__inner {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 var(--space-md);
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0 16px 0 0;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: var(--space-lg);
 }
 
-.topbar__left { display: flex; align-items: center; }
-.topbar__center { display: flex; justify-content: center; align-items: center; }
+.topbar__left {
+  display: flex;
+  align-items: center;
+  padding-left: 0;
+  margin-left: 0;
+}
+
+.topbar .header-logo-link {
+  display: block;
+  padding-left: 12px;
+}
+
+.topbar__center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  white-space: nowrap;
+  max-width: calc(100% - 520px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: auto;
+}
+
 .topbar__right { display: flex; align-items: center; justify-content: flex-end; }
 
 .topbar .topbar__logo,
@@ -113,6 +141,9 @@ body {
   font-size: 1.35rem;
   font-weight: 700;
   letter-spacing: -0.02em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .topbar__title a {
