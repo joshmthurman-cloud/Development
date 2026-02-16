@@ -77,9 +77,9 @@ body {
 
 /* ---- Topbar (dark header) ---- */
 .topbar {
-  background: linear-gradient(90deg, #474954 0%, rgba(86, 147, 179, 0.22) 120%);
+  background: linear-gradient(90deg, rgba(86, 147, 179, 0.22) 0%, #474954 72%);
   color: var(--text-inverse);
-  padding: 16px 0;
+  padding: 20px 0;
   margin-bottom: var(--space-xl);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   border-bottom: 1px solid rgba(86, 147, 179, 0.35);
@@ -101,7 +101,7 @@ body {
 
 .topbar .topbar__logo,
 .topbar .logo {
-  height: 38px;
+  height: 64px;
   width: auto;
   display: block;
   object-fit: contain;
