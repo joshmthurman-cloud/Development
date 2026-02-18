@@ -95,16 +95,15 @@ async function main() {
 
   const categories: Record<string, string> = {};
   for (const def of categoryDefs) {
-    const cat = await prisma.category.upsert({
+    const existing = await prisma.category.findFirst({
       where: {
-        businessId_name_parentId: {
-          businessId: business.id,
-          name: def.name,
-          parentId: null as any,
-        },
+        businessId: business.id,
+        name: def.name,
+        parentId: null,
       },
-      update: {},
-      create: {
+    });
+    const cat = existing ?? await prisma.category.create({
+      data: {
         businessId: business.id,
         name: def.name,
         group: def.group,
