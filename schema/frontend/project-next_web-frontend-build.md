@@ -46,7 +46,7 @@ Build the **Next.js web frontend** for the Schema Books SaaS dashboard. This con
 
 ## Backend API Reference
 
-The backend is running at `http://localhost:3000/api/v1` (configurable via `NEXT_PUBLIC_API_URL`).
+The backend is running at `http://localhost:8901/api/v1` (configurable via `NEXT_PUBLIC_API_URL`).
 
 Full Swagger docs available at `/api/v1/docs` when backend is running.
 
@@ -318,7 +318,7 @@ Structured logging that can be sent to the backend or a log aggregation service.
 ## Environment Variables
 
 ```
-NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
+NEXT_PUBLIC_API_URL=http://localhost:8901/api/v1
 NEXT_PUBLIC_APP_NAME=Schema Books
 ```
 

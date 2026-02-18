@@ -43,9 +43,9 @@ npx prisma db seed
 npm run start:dev
 ```
 
-The API will be available at `http://localhost:3000/api/v1`.
+The API will be available at `http://localhost:8901/api/v1`.
 
-Swagger docs at `http://localhost:3000/api/v1/docs`.
+Swagger docs at `http://localhost:8901/api/v1/docs`.
 
 ## Demo Credentials
 

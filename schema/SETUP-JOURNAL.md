@@ -41,6 +41,34 @@ sudo usermod -aG docker $USER
 
 ---
 
+## 6. Backend not accessible from browser — localhost binding
+
+**Issue:** NestJS `app.listen(port)` defaults to `127.0.0.1`, so it only accepts connections from the server itself. Browser on Windows couldn't reach it.
+
+**Fix:** Changed `main.ts` to `app.listen(port, '0.0.0.0')` to bind to all interfaces. Access from Windows via SSH tunnel: `ssh -L 8901:localhost:8901 josh@10.200.0.235`, then browse `http://localhost:8901/api/v1/health`.
+
+**Note:** All other apps on this server (TPN Builder, CEDP, DEJ) also bind to `0.0.0.0` on the `10.200.0.235` private network.
+
+---
+
+## 8. Future: Startup script (.sh) for server
+
+**Note:** Create a single startup script (`.sh` on the server, not `.bat`) at `~/Development/schema/` that automates all startup steps without terminal dependency:
+- Start Docker containers, wait for healthy
+- Start backend (NestJS) in background, verify health endpoint responds
+- Start frontend (Next.js) in background on port 8095
+- Health checks at each step before proceeding
+- Should run detached so closing the SSH session doesn't kill the apps (use `nohup` or `pm2`)
+- Include a matching `stop.sh` to tear everything down
+
+---
+
+## 7. Future: Admin dashboard page
+
+**Note:** Need to create an admin page with a dashboard showing available pages/endpoints (like health). The health status should be a small, simple dashboard — just the single metric, nothing crazy.
+
+---
+
 ## 3. `docker-compose.yml` obsolete `version` attribute
 
 **Issue:** Docker Compose v2 warns that `version: "3.9"` is obsolete and will be ignored.

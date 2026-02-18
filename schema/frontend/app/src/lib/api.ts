@@ -1,6 +1,6 @@
 import { logger } from "./logger";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8901/api/v1";
 
 interface RequestOptions extends Omit<RequestInit, "body" | "headers"> {
   body?: unknown;

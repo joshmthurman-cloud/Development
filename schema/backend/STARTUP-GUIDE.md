@@ -65,7 +65,7 @@ npm run start:dev
 ### 8. Verify
 
 ```bash
-curl http://localhost:3000/api/v1/health
+curl http://localhost:8901/api/v1/health
 ```
 
 Expected response:
@@ -82,7 +82,7 @@ docker compose up -d
 npm run start:dev
 ```
 
-Verify: `curl http://localhost:3000/api/v1/health`
+Verify: `curl http://localhost:8901/api/v1/health`
 
 ## Shutdown
 
@@ -108,7 +108,7 @@ docker compose down
 
 | Service | Port |
 |---------|------|
-| NestJS API | 3000 |
+| NestJS API | 8901 |
 | PostgreSQL | 5432 |
 | Redis | 6379 |
 | MinIO API | 9000 |
@@ -116,6 +116,6 @@ docker compose down
 
 ## API
 
-- Base URL: `http://localhost:3000/api/v1`
-- Swagger Docs: `http://localhost:3000/api/v1/docs`
+- Base URL: `http://localhost:8901/api/v1`
+- Swagger Docs: `http://localhost:8901/api/v1/docs`
 - Demo login: `demo@schemabooks.com` / `Password123!`
