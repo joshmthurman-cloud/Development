@@ -28,6 +28,6 @@ Thumbs.db
 # Logs
 *.log
 
-# Environment
+# Environment (never commit secrets)
 .env
 .env.local
