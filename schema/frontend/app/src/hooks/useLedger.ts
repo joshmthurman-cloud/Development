@@ -64,7 +64,7 @@ export function useLedger(
     const query = accountType ? `?accountType=${accountType}` : "";
 
     Promise.all([
-      api<LedgerSummary>(
+      api<Record<string, unknown>>(
         `/businesses/${businessId}/fiscal-years/${fiscalYearId}/ledger/summary${query}`,
         {},
         "LedgerView"
@@ -82,8 +82,24 @@ export function useLedger(
           ? categories.filter((c) => c.accountType === accountType)
           : categories;
 
-        setData(mergeCategories(filteredCategories, summary.categoryTotals));
-        setMonthlyTotals(summary.monthlyTotals);
+        const rawTotals = (summary.categoryTotals || []) as CategoryTotal[];
+        setData(mergeCategories(filteredCategories, rawTotals));
+
+        const rawMonthly = summary.monthlyTotals as Record<string, { income: number; expenses: number }> | undefined;
+        if (rawMonthly) {
+          const income = { ...EMPTY_MONTHLY };
+          const expenses = { ...EMPTY_MONTHLY };
+          for (let m = 1; m <= 12; m++) {
+            const key = String(m);
+            if (rawMonthly[key]) {
+              income[m as keyof MonthlyValues] = rawMonthly[key].income || 0;
+              expenses[m as keyof MonthlyValues] = rawMonthly[key].expenses || 0;
+            }
+          }
+          setMonthlyTotals({ income, expenses });
+        } else {
+          setMonthlyTotals({ income: { ...EMPTY_MONTHLY }, expenses: { ...EMPTY_MONTHLY } });
+        }
       })
       .catch((err) => {
         if (!mounted) return;
