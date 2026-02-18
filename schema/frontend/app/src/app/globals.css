@@ -1,0 +1,251 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════
+   Schema Books — Theme System
+   All colors use semantic CSS variables.
+   Swap themes by changing data-theme on <html>.
+   ═══════════════════════════════════════════════════ */
+
+:root,
+[data-theme="schema-books"] {
+  --sb-primary: #004070;
+  --sb-primary-hover: #003050;
+  --sb-accent: #10C0C0;
+  --sb-accent-hover: #0ea8a8;
+  --sb-secondary: #104070;
+  --sb-supporting-1: #10B0C0;
+  --sb-supporting-2: #10A0B0;
+  --sb-supporting-3: #10D0D0;
+
+  --sb-bg: #f8fafc;
+  --sb-surface: #ffffff;
+  --sb-surface-alt: #f1f5f9;
+  --sb-border: #e2e8f0;
+  --sb-border-strong: #cbd5e1;
+
+  --sb-text: #0f172a;
+  --sb-text-secondary: #334155;
+  --sb-muted: #64748b;
+
+  --sb-success: #16a34a;
+  --sb-success-bg: #f0fdf4;
+  --sb-danger: #dc2626;
+  --sb-danger-bg: #fef2f2;
+  --sb-warning: #d97706;
+  --sb-warning-bg: #fffbeb;
+  --sb-info: #2563eb;
+  --sb-info-bg: #eff6ff;
+
+  --sb-radius-card: 16px;
+  --sb-radius-input: 12px;
+  --sb-radius-pill: 9999px;
+
+  --sb-shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --sb-shadow-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  --sb-sidebar-width: 260px;
+  --sb-header-height: 64px;
+}
+
+/* ═══ Base Reset & Typography ═══ */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  background-color: var(--sb-bg);
+  color: var(--sb-text);
+  line-height: 1.6;
+}
+
+/* ═══ Focus States (Accessibility) ═══ */
+
+*:focus-visible {
+  outline: 2px solid var(--sb-accent);
+  outline-offset: 2px;
+}
+
+/* ═══ Scrollbar Styling ═══ */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--sb-border-strong);
+  border-radius: var(--sb-radius-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--sb-muted);
+}
+
+/* ═══ Utility Classes ═══ */
+
+.sb-card {
+  background: var(--sb-surface);
+  border: 1px solid var(--sb-border);
+  border-radius: var(--sb-radius-card);
+  box-shadow: var(--sb-shadow-card);
+  padding: 20px;
+}
+
+.sb-kpi-value {
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--sb-text);
+}
+
+.sb-kpi-label {
+  font-size: 13px;
+  color: var(--sb-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sb-section {
+  margin-bottom: 24px;
+}
+
+/* ═══ Ledger Table ═══ */
+
+.ledger-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+}
+
+.ledger-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--sb-surface);
+  border-bottom: 2px solid var(--sb-border);
+  padding: 10px 12px;
+  text-align: right;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--sb-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.ledger-table thead th:first-child {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  z-index: 20;
+  background: var(--sb-surface);
+}
+
+.ledger-table tbody td {
+  padding: 8px 12px;
+  text-align: right;
+  border-bottom: 1px solid var(--sb-border);
+  white-space: nowrap;
+}
+
+.ledger-table tbody td:first-child {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  background: var(--sb-surface);
+  z-index: 5;
+  font-weight: 500;
+}
+
+.ledger-table tbody tr:hover td {
+  background: var(--sb-surface-alt);
+}
+
+.ledger-table tbody td:first-child {
+  background: var(--sb-surface);
+}
+
+.ledger-table tbody tr:hover td:first-child {
+  background: var(--sb-surface-alt);
+}
+
+.ledger-group-header td {
+  background: var(--sb-surface-alt) !important;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--sb-primary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.ledger-total-row td {
+  font-weight: 700;
+  border-top: 2px solid var(--sb-border-strong);
+  background: var(--sb-surface) !important;
+}
+
+.ledger-net-row td {
+  font-weight: 700;
+  color: var(--sb-primary);
+  border-top: 2px solid var(--sb-primary);
+}
+
+/* ═══ Cell clickable state ═══ */
+
+.ledger-cell-clickable {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 2px 6px;
+  transition: background-color 150ms ease;
+}
+
+.ledger-cell-clickable:hover {
+  background-color: color-mix(in srgb, var(--sb-accent) 12%, transparent);
+}
+
+.ledger-cell-clickable:focus-visible {
+  outline: 2px solid var(--sb-accent);
+  outline-offset: 1px;
+}
+
+/* ═══ Animations ═══ */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideOutRight {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 200ms ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 250ms ease-out;
+}
+
+.animate-slide-out-right {
+  animation: slideOutRight 200ms ease-in;
+}
