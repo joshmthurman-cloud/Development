@@ -47,13 +47,26 @@ if [[ $elapsed -ge $HEALTH_TIMEOUT ]]; then
   exit 1
 fi
 
-# --- Step 4: Frontend (detached via PM2) ---
+# --- Step 4: Frontend (build if needed, then detached via PM2) ---
 echo "[4/4] Starting frontend (Next.js) on port $FRONTEND_PORT..."
+if [[ ! -f "$FRONTEND_DIR/.next/BUILD_ID" ]]; then
+  echo "      No production build found; running npm ci and npm run build..."
+  (cd "$FRONTEND_DIR" && npm ci && npm run build)
+fi
 pm2 delete schema-frontend 2>/dev/null || true
 PORT=$FRONTEND_PORT pm2 start npm --name schema-frontend --cwd "$FRONTEND_DIR" -- run start
 
+# --- Show URLs (use server IP for access from other machines) ---
+PUBLIC_HOST="${SCHEMA_PUBLIC_HOST:-}"
+if [[ -z "$PUBLIC_HOST" ]]; then
+  PUBLIC_HOST="$(hostname -I 2>/dev/null | awk '{print $1}')"
+fi
+if [[ -z "$PUBLIC_HOST" ]]; then
+  PUBLIC_HOST="127.0.0.1"
+fi
+
 echo ""
 echo "Schema is up."
-echo "  Backend:  http://127.0.0.1:$BACKEND_PORT/api/v1 (health: $HEALTH_URL)"
-echo "  Frontend: http://127.0.0.1:$FRONTEND_PORT"
+echo "  Backend:  http://$PUBLIC_HOST:$BACKEND_PORT/api/v1 (health: http://$PUBLIC_HOST:$BACKEND_PORT/api/v1/health)"
+echo "  Frontend: http://$PUBLIC_HOST:$FRONTEND_PORT"
 echo "  PM2: pm2 status | pm2 logs schema-backend | pm2 logs schema-frontend"
