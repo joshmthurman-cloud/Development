@@ -54,7 +54,13 @@ if [[ ! -f "$FRONTEND_DIR/.next/BUILD_ID" ]]; then
   (cd "$FRONTEND_DIR" && npm ci && npm run build)
 fi
 pm2 delete schema-frontend 2>/dev/null || true
-PORT=$FRONTEND_PORT pm2 start npm --name schema-frontend --cwd "$FRONTEND_DIR" -- run start
+# Run next binary directly so cwd is correct and .next is found (pm2 + npm can lose cwd)
+NEXT_BIN="$FRONTEND_DIR/node_modules/.bin/next"
+if [[ ! -f "$NEXT_BIN" ]]; then
+  echo "Error: Next.js not found at $NEXT_BIN. Run: cd $FRONTEND_DIR && npm ci" >&2
+  exit 1
+fi
+pm2 start "$NEXT_BIN" --name schema-frontend --cwd "$FRONTEND_DIR" -- start -p "$FRONTEND_PORT"
 
 # --- Show URLs (use server IP for access from other machines) ---
 PUBLIC_HOST="${SCHEMA_PUBLIC_HOST:-}"
