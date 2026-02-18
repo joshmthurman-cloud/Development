@@ -46,16 +46,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     async function bootstrap() {
       try {
-        const data = await api<{
-          user: User;
-          businesses: Business[];
-        }>("/auth/me", {}, "AuthProvider");
-
+        const userData = await api<User>("/users/me", {}, "AuthProvider");
         if (!mounted) return;
-        setUser(data.user);
-        setBusinesses(data.businesses);
-        if (data.businesses.length > 0) {
-          setActiveBusiness(data.businesses[0]);
+        setUser(userData);
+
+        try {
+          const bizList = await api<Business[]>("/businesses", {}, "AuthProvider");
+          if (!mounted) return;
+          setBusinesses(bizList);
+          if (bizList.length > 0) setActiveBusiness(bizList[0]);
+        } catch {
+          if (mounted) setBusinesses([]);
         }
       } catch {
         setUser(null);
@@ -104,15 +105,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await api<{
         accessToken: string;
         user: User;
-        businesses: Business[];
       }>("/auth/login", { method: "POST", body: { email, password } }, "LoginForm");
 
       setAccessToken(data.accessToken);
       setUser(data.user);
-      setBusinesses(data.businesses);
-      if (data.businesses.length > 0) setActiveBusiness(data.businesses[0]);
       resetCorrelationId();
       logger.loginSuccess({ userId: data.user.id });
+
+      try {
+        const bizList = await api<Business[]>("/businesses", {}, "LoginForm");
+        setBusinesses(bizList);
+        if (bizList.length > 0) setActiveBusiness(bizList[0]);
+      } catch {
+        setBusinesses([]);
+      }
     } catch (err) {
       logger.loginFailure({ email, error: String(err) });
       throw err;

@@ -72,14 +72,14 @@ export function Header() {
               className="w-8 h-8 rounded-full bg-[var(--sb-accent)] flex items-center justify-center text-white text-sm font-semibold"
               aria-hidden="true"
             >
-              {user.name.charAt(0).toUpperCase()}
+              {(user.firstName || user.email).charAt(0).toUpperCase()}
             </div>
             <div className="hidden sm:block">
               <p className="text-sm font-medium text-[var(--sb-text)] leading-tight">
-                {user.name}
+                {user.firstName} {user.lastName}
               </p>
               <p className="text-xs text-[var(--sb-muted)] leading-tight">
-                {user.role}
+                {user.email}
               </p>
             </div>
           </div>

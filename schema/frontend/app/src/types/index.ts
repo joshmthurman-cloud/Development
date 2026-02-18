@@ -1,8 +1,8 @@
 export interface User {
   id: string;
   email: string;
-  name: string;
-  role: "owner" | "admin" | "bookkeeper" | "viewer";
+  firstName: string;
+  lastName: string;
 }
 
 export interface Business {
