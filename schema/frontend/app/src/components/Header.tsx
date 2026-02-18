@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/Button";
 
 export function Header() {
-  const { user, businesses, activeBusiness, switchBusiness, fiscalYears, activeFiscalYear, switchFiscalYear, logout } = useAuth();
+  const { user, businesses = [], activeBusiness, switchBusiness, fiscalYears = [], activeFiscalYear, switchFiscalYear, logout } = useAuth();
 
   return (
     <header
