@@ -99,9 +99,7 @@ export async function api<T>(
       return retry.json();
     }
 
-    if (typeof window !== "undefined") {
-      window.location.href = "/login";
-    }
+    accessToken = null;
     throw new ApiClientError(401, "Authentication required");
   }
 
