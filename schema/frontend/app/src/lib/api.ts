@@ -8,10 +8,15 @@ interface RequestOptions extends Omit<RequestInit, "body" | "headers"> {
 }
 
 let accessToken: string | null = null;
+let storedRefreshToken: string | null = null;
 let refreshPromise: Promise<string | null> | null = null;
 
 export function setAccessToken(token: string | null): void {
   accessToken = token;
+}
+
+export function setRefreshToken(token: string | null): void {
+  storedRefreshToken = token;
 }
 
 export function getAccessToken(): string | null {
@@ -19,19 +24,26 @@ export function getAccessToken(): string | null {
 }
 
 async function refreshToken(): Promise<string | null> {
+  if (!storedRefreshToken) {
+    return null;
+  }
+
   try {
     const res = await fetch(`${API_URL}/auth/refresh`, {
       method: "POST",
-      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken: storedRefreshToken }),
     });
 
     if (!res.ok) {
       logger.tokenRefreshFailure({ status: res.status });
+      storedRefreshToken = null;
       return null;
     }
 
     const data = await res.json();
     accessToken = data.accessToken;
+    storedRefreshToken = data.refreshToken;
     return accessToken;
   } catch {
     logger.tokenRefreshFailure({ error: "network_error" });

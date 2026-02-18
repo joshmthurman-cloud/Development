@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import type { User, Business, FiscalYear } from "@/types";
-import { api, setAccessToken } from "@/lib/api";
+import { api, setAccessToken, setRefreshToken } from "@/lib/api";
 import { logger, resetCorrelationId } from "@/lib/logger";
 
 interface AuthState {
@@ -104,10 +104,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const data = await api<{
         accessToken: string;
+        refreshToken: string;
         user: User;
       }>("/auth/login", { method: "POST", body: { email, password } }, "LoginForm");
 
       setAccessToken(data.accessToken);
+      setRefreshToken(data.refreshToken);
       setUser(data.user);
       resetCorrelationId();
       logger.loginSuccess({ userId: data.user.id });
@@ -131,6 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       logger.logout();
       setAccessToken(null);
+      setRefreshToken(null);
       setUser(null);
       setBusinesses([]);
       setActiveBusiness(null);
