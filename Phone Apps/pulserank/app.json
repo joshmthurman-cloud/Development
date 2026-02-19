@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "Pulse Rank",
+    "slug": "pulserank",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/branding/app_logo.png",
+    "scheme": "pulserank",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/branding/app_logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B1120"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.pulserank.app",
+      "infoPlist": {
+        "UIBackgroundModes": ["remote-notification"]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/branding/app_logo.png",
+        "backgroundColor": "#0B1120"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/branding/app_logo.png",
+          "color": "#14B8A6"
+        }
+      ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "placeholder"
+      }
+    }
+  }
+}
